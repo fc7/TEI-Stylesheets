@@ -58,7 +58,14 @@ of this software, even if advised of the possibility of such damage.
    <xsl:template name="makeAppEntry">
      <xsl:param name="lemma"/>
      <!--<xsl:message>App: <xsl:value-of select="($lemma,$lemmawitness,$readings)" separator="|"/></xsl:message>-->
-     <xsl:value-of select="$lemma"/>
+      <span class="txtlemma"><xsl:if test="tei:lem/@xml:id">
+         <xsl:attribute name="id">
+            <xsl:value-of select="tei:lem/@xml:id"/>
+         </xsl:attribute>
+      </xsl:if><xsl:apply-templates select="tei:lem"/></span>
+      <xsl:variable name="noteNumber">
+         <xsl:number count="tei:app" level="single"/>
+      </xsl:variable>
       <xsl:variable name="identifier">
          <xsl:text>App</xsl:text>
          <xsl:choose>
@@ -66,7 +73,7 @@ of this software, even if advised of the possibility of such damage.
 	     <xsl:value-of select="@xml:id"/>
 	   </xsl:when>
 	   <xsl:otherwise>
-	     <xsl:number count="tei:app" level="any"/>
+	     <xsl:value-of select="$noteNumber"/>
 	   </xsl:otherwise>
          </xsl:choose>
       </xsl:variable>
@@ -80,11 +87,34 @@ of this software, even if advised of the possibility of such damage.
 	 </a>
        </xsl:when>
        <xsl:otherwise>
-	 <a class="notelink" href="#{$identifier}">
+	 <!--<a class="notelink" href="#{$identifier}">
 	   <sup>
 	     <xsl:call-template name="appN"/>
 	   </sup>
-	 </a>
+	 </a>-->
+       <span class="app">
+          <a class="app">
+             <xsl:attribute name="aria-label"><xsl:value-of select="$noteNumber"/></xsl:attribute>
+             <xsl:attribute name="href"><xsl:text>#app</xsl:text><xsl:value-of select="$noteNumber"/></xsl:attribute>
+          </a>
+         <span class="appnote">
+            <xsl:attribute name="data-sign"><xsl:value-of select="$noteNumber"/></xsl:attribute>
+            <xsl:attribute name="id"><xsl:text>app</xsl:text><xsl:value-of select="$noteNumber"/></xsl:attribute>
+            <span class="applemma">
+               <xsl:choose>
+                  <xsl:when test="tei:lem/@rend != ''">
+                     <xsl:value-of select="tei:lem/@rend"/>
+                  </xsl:when>
+                  <xsl:otherwise>
+                     <xsl:apply-templates select="tei:lem"/>
+                  </xsl:otherwise>
+               </xsl:choose>
+               <xsl:text>] </xsl:text>
+            <xsl:call-template name="appLemmaWitness"/>
+            <xsl:call-template name="appReadings"/>
+            </span>
+         </span>
+      </span>
        </xsl:otherwise>
       </xsl:choose>
 
@@ -117,6 +147,52 @@ of this software, even if advised of the possibility of such damage.
 	<xsl:call-template name="appReadings"/>
      </div>
      
+   </xsl:template>
+   
+   <!-- OVERLOADING FUNCTIONS in common_textcrit.xsl -->
+   
+   <xsl:template name="appLemmaWitness">
+      <xsl:choose>
+         <xsl:when test="tei:lem/@wit">
+            <span class="appwitness"><xsl:value-of select="tei:getWitness(tei:lem/@wit)"/>
+               <xsl:text>; </xsl:text>
+            </span>
+         </xsl:when>
+         <!--FC7 <xsl:otherwise>
+        <xsl:value-of select="tei:getWitness(tei:rdg[1]/@wit)"/>
+      </xsl:otherwise>-->
+      </xsl:choose>
+   </xsl:template>
+   
+   <xsl:template name="appLemma">
+      <xsl:choose>
+         <xsl:when test="tei:lem">
+            <xsl:choose>
+               <xsl:when test="tei:lem/@rend != ''">
+                  <span class="applemma"><xsl:value-of select="tei:lem/@rend"/></span>
+               </xsl:when>
+               <xsl:otherwise>
+                  <span class="applemma"><xsl:apply-templates select="tei:lem/*" mode="clean"/></span>
+               </xsl:otherwise>
+            </xsl:choose>
+         </xsl:when>
+         <!--FC7 <xsl:otherwise>
+        <xsl:value-of select="tei:rdg[1]"/>
+      </xsl:otherwise>-->
+      </xsl:choose>
+   </xsl:template>
+   
+   <xsl:template name="appReadings">
+      <xsl:variable name="start" select="if (not(tei:lem)) then 1 else 0"/>
+      <xsl:for-each select="tei:rdg">
+         <xsl:apply-templates/>
+         <xsl:text> </xsl:text>
+         <xsl:if test="@cause = 'omission'"><span class="appomission">omit.</span> </xsl:if>
+         <span class="rdgwitness">
+         <xsl:value-of select="tei:getWitness(@wit)"/>
+         </span>
+         <xsl:if test="following-sibling::tei:rdg">; </xsl:if>
+      </xsl:for-each>
    </xsl:template>
 
 </xsl:stylesheet>

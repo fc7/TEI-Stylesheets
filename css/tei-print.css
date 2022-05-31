@@ -53,8 +53,8 @@ a:visited {
 }
 
 body { 
-   font-family: Helvetica, Arial, sans-serif;
-   font-size: 10pt;
+   font-family:Baskerville, serif;
+   font-size:14pt;
 }
 
 div.pre, div.pre_eg, pre.eg {
@@ -82,7 +82,7 @@ td {
 }
 
 td.maintext, td.maintext p {
-   font-family: Helvetica, Arial, sans-serif;
+   font-family: Baskerville, serif;
 }
    
 /* classes */
@@ -93,4 +93,24 @@ td.maintext, td.maintext p {
 
 div.pagebreak {
     page-break-before: always;
+}
+
+input[type=checkbox].inlinenote ~ span.noteBody { 
+    display:block;
+    color: blue;
+    margin-left:3%;
+}
+
+span.appnote {
+	background-color:#ffffff;
+	border-radius:1px;
+	/*box-shadow:0 0 2px 0 #a0b0e0;*/
+	float:right;
+	display:inline-block; /* todo: toggle globally */
+	font-size:0.85rem;
+	margin-right:-53%;
+	text-align:start;
+	padding:3px 5px 4px 5px;
+	width:51%;
+    z-index:0;
 }

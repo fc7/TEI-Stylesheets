@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet                 xmlns:m="http://www.w3.org/1998/Math/MathML"
-				xmlns="http://www.w3.org/1999/xhtml"
-				xmlns:a="http://relaxng.org/ns/compatibility/annotations/1.0"
-				xmlns:fo="http://www.w3.org/1999/XSL/Format"
-				xmlns:xs="http://www.w3.org/2001/XMLSchema"
-				xmlns:html="http://www.w3.org/1999/xhtml"
-				xmlns:fn="http://www.w3.org/2005/xpath-functions"
-				xmlns:rng="http://relaxng.org/ns/structure/1.0"
-				xmlns:tei="http://www.tei-c.org/ns/1.0"
-				xmlns:teix="http://www.tei-c.org/ns/Examples"
-				xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-				xmlns:teidocx="http://www.tei-c.org/ns/teidocx/1.0"
-				exclude-result-prefixes="#all" version="2.0">
+                                xmlns="http://www.w3.org/1999/xhtml"
+                                xmlns:a="http://relaxng.org/ns/compatibility/annotations/1.0"
+                                xmlns:fo="http://www.w3.org/1999/XSL/Format"
+                                xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                                xmlns:html="http://www.w3.org/1999/xhtml"
+                                xmlns:fn="http://www.w3.org/2005/xpath-functions"
+                                xmlns:rng="http://relaxng.org/ns/structure/1.0"
+                                xmlns:tei="http://www.tei-c.org/ns/1.0"
+                                xmlns:teix="http://www.tei-c.org/ns/Examples"
+                                xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+                                xmlns:teidocx="http://www.tei-c.org/ns/teidocx/1.0"
+                                exclude-result-prefixes="#all" version="2.0">
   <doc xmlns="http://www.oxygenxml.com/ns/doc/xsl" scope="stylesheet" type="stylesheet">
     <desc>
       <p> TEI stylesheet dealing with elements from the core module, making
@@ -381,33 +381,33 @@ of this software, even if advised of the possibility of such damage.
         <xsl:apply-templates/>
       </xsl:when>
       <xsl:when test="not(preceding-sibling::tei:head) and starts-with($parentName,'div') and (tei:keepDivOnPage(..) or 
-		      number($depth)  &gt; number($splitLevel))">
-	  <xsl:variable name="Heading">
-	    <xsl:for-each select="..">
-	      <xsl:call-template name="splitHTMLBlocks">
-		<xsl:with-param name="element" select="if (number($depth)+$divOffset &gt;6) then 'div'
-					       else
-					       concat('h',number($depth)+$divOffset)"/>
-		<xsl:with-param name="content">
-		  <xsl:call-template name="sectionHeadHook"/>
-		  <xsl:call-template name="header">
-		    <xsl:with-param name="display">full</xsl:with-param>
-		  </xsl:call-template>
-		</xsl:with-param>
-		<xsl:with-param name="copyid">false</xsl:with-param>
-	      </xsl:call-template>
-	    </xsl:for-each>
-	  </xsl:variable>
-	  <xsl:choose>
+                      number($depth)  &gt; number($splitLevel))">
+          <xsl:variable name="Heading">
+            <xsl:for-each select="..">
+              <xsl:call-template name="splitHTMLBlocks">
+                <xsl:with-param name="element" select="if (number($depth)+$divOffset &gt;6) then 'div'
+                                               else
+                                               concat('h',number($depth)+$divOffset)"/>
+                <xsl:with-param name="content">
+                  <xsl:call-template name="sectionHeadHook"/>
+                  <xsl:call-template name="header">
+                    <xsl:with-param name="display">full</xsl:with-param>
+                  </xsl:call-template>
+                </xsl:with-param>
+                <xsl:with-param name="copyid">false</xsl:with-param>
+              </xsl:call-template>
+            </xsl:for-each>
+          </xsl:variable>
+          <xsl:choose>
 	    <xsl:when test="$outputTarget=('html5', 'html') and number($depth)  &lt; 1">
-	      <header>
-		<xsl:copy-of select="$Heading"/>
-	      </header>
-	    </xsl:when>
-	    <xsl:otherwise>
-	      <xsl:copy-of select="$Heading"/>
-	    </xsl:otherwise>
-	  </xsl:choose>
+              <header>
+                <xsl:copy-of select="$Heading"/>
+              </header>
+            </xsl:when>
+            <xsl:otherwise>
+              <xsl:copy-of select="$Heading"/>
+            </xsl:otherwise>
+          </xsl:choose>
       </xsl:when>
     </xsl:choose>
   </xsl:template>
@@ -876,8 +876,64 @@ of this software, even if advised of the possibility of such damage.
   <doc xmlns="http://www.oxygenxml.com/ns/doc/xsl">
     <desc>Process plain note without any @place attribute</desc>
   </doc>
+  
+  <!--FC Process name and add full name and dates as title -->
+  <xsl:template match="tei:name">
+    <xsl:variable name="person" select="id(substring(@ref, 2))"/>
+    <xsl:variable name="personLabel">
+      <xsl:choose>
+        <xsl:when test="count($person)>0">
+          <xsl:value-of select="$person/tei:persName/tei:forename/text()"/>
+          <xsl:text> </xsl:text>
+          <xsl:choose> 
+            <xsl:when test="$person/tei:persName/tei:surname/@type">
+              <xsl:value-of select="$person/tei:persName/tei:surname[@type='married']/text()"/>
+            </xsl:when>
+            <xsl:otherwise>
+              <xsl:value-of select="$person/tei:persName/tei:surname/text()"/>
+            </xsl:otherwise>
+          </xsl:choose>
+          <xsl:if test="$person/tei:birth|tei:death">
+            <xsl:text> (</xsl:text>
+            <xsl:choose>
+              <xsl:when test="$person/tei:birth">
+                <xsl:value-of select="substring($person/tei:birth, 1, 4)"/>
+              </xsl:when>
+              <xsl:otherwise><xsl:text>?</xsl:text></xsl:otherwise>
+            </xsl:choose>
+            <xsl:text>-</xsl:text>
+            <xsl:choose>
+              <xsl:when test="$person/tei:death">
+                <xsl:value-of select="substring($person/tei:death, 1, 4)"/>
+              </xsl:when>
+              <xsl:otherwise><xsl:text>?</xsl:text></xsl:otherwise>
+            </xsl:choose>
+            <xsl:text>)</xsl:text>
+          </xsl:if>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:text>UNBEKANNT</xsl:text>
+        </xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
+    <span>
+      <xsl:attribute name="class">name</xsl:attribute>
+      <xsl:attribute name="title">
+        <xsl:value-of select="$personLabel"/>
+      </xsl:attribute>
+      <xsl:apply-templates/>
+      <xsl:if test="$personLabel!='UNBEKANNT'">
+        <span class="nameref"> [<a>
+          <xsl:attribute name="href">
+            <xsl:value-of select="@ref"/>
+          </xsl:attribute>
+          <xsl:text>ref</xsl:text>
+        </a>]</span>
+      </xsl:if>
+    </span>
+  </xsl:template>
 
-  <xsl:template name="plainNote">
+<!--  <xsl:template name="plainNote">
     <xsl:variable name="identifier">
       <xsl:call-template name="noteID"/>
     </xsl:variable>
@@ -899,6 +955,27 @@ of this software, even if advised of the possibility of such damage.
           </xsl:otherwise>
         </xsl:choose>
       </span>
+      <div class="noteBody">
+      <xsl:apply-templates/>
+      </div>
+    </span>
+  </xsl:template>-->
+  <xsl:template name="plainNote">
+    <xsl:variable name="identifier">
+      <xsl:call-template name="noteID"/>
+    </xsl:variable>
+    <input type="checkbox" class="inlinenote">
+      <xsl:attribute name="id">
+        <xsl:value-of select="$identifier"/>
+      </xsl:attribute>
+    </input>
+    <label>
+      <xsl:attribute name="for">
+        <xsl:value-of select="$identifier"/>
+      </xsl:attribute>
+      <sup>*</sup><!-- Maybe use ▼ or $identifier ? -->
+    </label>
+    <span class="noteBody">
       <xsl:apply-templates/>
     </span>
   </xsl:template>
@@ -959,7 +1036,7 @@ of this software, even if advised of the possibility of such damage.
   <doc xmlns="http://www.oxygenxml.com/ns/doc/xsl">
     <desc>Process display-style note</desc>
   </doc>
-  <xsl:template name="displayNote">
+  <!--<xsl:template name="displayNote">
     <xsl:variable name="identifier">
       <xsl:call-template name="noteID"/>
     </xsl:variable>
@@ -984,6 +1061,25 @@ of this software, even if advised of the possibility of such damage.
       </span>
       <xsl:apply-templates/>
     </xsl:element>
+  </xsl:template>-->
+  <xsl:template name="displayNote">
+    <xsl:variable name="identifier">
+      <xsl:call-template name="noteID"/>
+    </xsl:variable>
+    <input type="checkbox" class="inlinenote">
+      <xsl:attribute name="id">
+        <xsl:value-of select="$identifier"/>
+      </xsl:attribute>
+    </input>
+    <label>
+      <xsl:attribute name="for">
+        <xsl:value-of select="$identifier"/>
+      </xsl:attribute>
+      <sup>*</sup><!-- Maybe use ▼ or $identifier ? -->
+    </label>
+    <span class="noteBody">
+      <xsl:apply-templates/>
+    </span>
   </xsl:template>
 
   <doc xmlns="http://www.oxygenxml.com/ns/doc/xsl">
@@ -1160,6 +1256,34 @@ of this software, even if advised of the possibility of such damage.
   </xsl:template>
   <doc xmlns="http://www.oxygenxml.com/ns/doc/xsl">
     <desc>
+      <p></p>
+    </desc>
+  </doc>
+  <xsl:template match="tei:pb">
+    <xsl:variable name="pagesepcount">
+      <xsl:number count="tei:pb" level="any"/>
+    </xsl:variable>
+    <span class="pagesep">
+      <a>
+        <xsl:attribute name="href">
+          <xsl:text>#pagesep</xsl:text>
+          <xsl:value-of select="$pagesepcount"/>
+        </xsl:attribute>
+        <xsl:text>|</xsl:text>
+      </a>
+    </span>
+    <span class="pagesepmargin">
+      <xsl:attribute name="id">
+        <xsl:text>pagesep</xsl:text>
+        <xsl:value-of select="$pagesepcount"/>
+      </xsl:attribute>
+      <xsl:value-of select="substring(@ed,2)"/>
+      <xsl:text>:</xsl:text>
+      <xsl:value-of select="@n"/>
+    </span>
+  </xsl:template>
+<!--  <doc xmlns="http://www.oxygenxml.com/ns/doc/xsl">
+    <desc>
       <p>Process element pb and gb</p>
       <p>Indication of a page or gathering break. For the purposes of HTML, we simply
       make it an anchor if it has an ID.</p>
@@ -1248,7 +1372,7 @@ of this software, even if advised of the possibility of such damage.
         </xsl:element>
       </xsl:otherwise>
     </xsl:choose>
-  </xsl:template>
+  </xsl:template>-->
   <doc xmlns="http://www.oxygenxml.com/ns/doc/xsl">
     <desc>Process element p</desc>
   </doc>
@@ -1700,11 +1824,11 @@ of this software, even if advised of the possibility of such damage.
         </xsl:otherwise>
       </xsl:choose>
     </xsl:if>
-    <xsl:if test="ancestor-or-self::tei:TEI/tei:text/descendant::tei:app">
+<!--FC7    <xsl:if test="ancestor-or-self::tei:TEI/tei:text/descendant::tei:app">
       <div class="appcrit">
         <xsl:apply-templates mode="printnotes" select="descendant::tei:app"/>
       </div>
-    </xsl:if>
+    </xsl:if>-->
   </xsl:template>
   <doc xmlns="http://www.oxygenxml.com/ns/doc/xsl">
     <desc>[html] Create a point to which we can link in the HTML <param name="name">value for identifier</param>

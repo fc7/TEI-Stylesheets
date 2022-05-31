@@ -61,7 +61,58 @@ of this software, even if advised of the possibility of such damage.
 
   <xsl:template match="tei:person">
       <li>
-         <xsl:apply-templates/>
+          <xsl:attribute name="id">
+              <xsl:value-of select="@xml:id"/>
+          </xsl:attribute>
+          <xsl:value-of select="tei:persName/tei:forename/text()"/>
+          <xsl:text> </xsl:text>
+          <xsl:choose> 
+              <xsl:when test="tei:persName/tei:surname/@type">
+                  <xsl:value-of select="tei:persName/tei:surname[@type='married']/text()"/>
+                  <!-- TODO add " née ..." -->
+              </xsl:when>
+              <xsl:otherwise>
+                  <xsl:value-of select="tei:persName/tei:surname/text()"/>
+              </xsl:otherwise>
+          </xsl:choose>
+          <xsl:if test="tei:birth|tei:death">
+              <xsl:text> (</xsl:text>
+              <xsl:choose>
+                  <xsl:when test="tei:birth">
+                      <xsl:value-of select="substring(tei:birth, 1, 4)"/>
+                  </xsl:when>
+                  <xsl:otherwise><xsl:text>?</xsl:text></xsl:otherwise>
+              </xsl:choose>
+              <xsl:text>-</xsl:text>
+              <xsl:choose>
+                  <xsl:when test="tei:death">
+                      <xsl:value-of select="substring(tei:death, 1, 4)"/>
+                  </xsl:when>
+                  <xsl:otherwise><xsl:text>?</xsl:text></xsl:otherwise>
+              </xsl:choose>
+              <xsl:text>)</xsl:text>
+          </xsl:if>
+          <xsl:if test="tei:occupation">
+              <xsl:text>, </xsl:text>
+              <xsl:value-of select="tei:occupation"/>
+          </xsl:if>
+          <xsl:if test="tei:note">
+              <xsl:text>, </xsl:text>
+              <xsl:value-of select="tei:note"/>
+          </xsl:if>
+          <br/>
+          <!--<xsl:if test="tei:bibl">-->
+              <!--<div class="indexrefs">Referenzen:</div>-->
+          <!--<ul>-->
+          <xsl:for-each select="tei:bibl">
+             <!-- <li>-->
+              <div class="biblfree">
+                  <xsl:apply-templates/>
+              </div>
+              <!--</li>-->
+          </xsl:for-each>
+          <!--</ul>-->
+          <!--</xsl:if>-->
       </li>
   </xsl:template>
 
