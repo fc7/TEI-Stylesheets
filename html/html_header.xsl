@@ -3,6 +3,7 @@
                 xmlns:a="http://relaxng.org/ns/compatibility/annotations/1.0"
                 xmlns:fo="http://www.w3.org/1999/XSL/Format"
                 xmlns:html="http://www.w3.org/1999/xhtml"
+                xmlns:fn="http://www.w3.org/2005/xpath-functions"
 
                 xmlns:rng="http://relaxng.org/ns/structure/1.0"
                 xmlns:tei="http://www.tei-c.org/ns/1.0"
@@ -98,6 +99,7 @@ of this software, even if advised of the possibility of such damage.
 	       <xsl:value-of select="."/>
 	     </xsl:variable>
 	     <xsl:for-each select="key('EXTRENDITION',$pointer)[1]">
+	       <xsl:if test="fn:doc-available($pointer)">
 	       <xsl:for-each select="document($pointer)">
 		 <xsl:text>&#10;.</xsl:text>
 		 <xsl:value-of select="@xml:id"/>
@@ -109,6 +111,7 @@ of this software, even if advised of the possibility of such damage.
 		 <xsl:value-of select="."/>
 		 <xsl:text>&#10;}</xsl:text>
 	       </xsl:for-each>
+	       </xsl:if>
 	     </xsl:for-each>
 	   </xsl:for-each>
          </style>
