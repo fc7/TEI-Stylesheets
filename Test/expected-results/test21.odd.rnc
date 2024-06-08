@@ -1,6 +1,5 @@
 namespace a = "http://relaxng.org/ns/compatibility/annotations/1.0"
 namespace ns1 = "http://www.w3.org/1999/xhtml"
-namespace ns2 = "http://www.isocat.org/ns/dcr"
 namespace rng = "http://relaxng.org/ns/structure/1.0"
 namespace sch = "http://purl.oclc.org/dsdl/schematron"
 default namespace tei = "http://www.tei-c.org/ns/1.0"
@@ -8,16 +7,8 @@ namespace teix = "http://www.tei-c.org/ns/Examples"
 namespace xi = "http://www.w3.org/2001/XInclude"
 namespace xlink = "http://www.w3.org/1999/xlink"
 
-
-#
-macro.paraContent =
-  (text
-   | model.gLike
-   | model.phrase
-   | model.inter
-   | model.global
-   | lg
-   | model.lLike)*
+macro.abContent = (text | model.paraPart | ab)*
+macro.paraContent = (text | model.paraPart)*
 macro.limitedContent = (text | model.limitedPhrase | model.inter)*
 macro.phraseSeq =
   (text
@@ -34,10 +25,10 @@ macro.specialPara =
    | model.divPart
    | model.global)*
 macro.xtext = (text | model.gLike)*
-anyElement-xenoData =
+anyElement_xenoData_1 =
   element * - (tei:* | teix:egXML) {
     attribute * { text }*,
-    (text | anyElement-xenoData)*
+    (text | anyElement_xenoData_1)*
   }
 att.anchoring.attributes =
   att.anchoring.attribute.anchored, att.anchoring.attribute.targetEnd
@@ -49,14 +40,18 @@ att.anchoring.attribute.targetEnd =
   
   ## (target end) pointe vers la fin d'un passage auquel la note est attachée, si la note n'est pas enchâssée dans le texte à cet endroit
   attribute targetEnd {
-    list { xsd:anyURI+ }
+    list {
+      xsd:anyURI { pattern = "\S+" }+
+    }
   }?
 att.ascribed.attributes = att.ascribed.attribute.who
 att.ascribed.attribute.who =
   
   ## indique la personne ou le groupe de personnes à qui le contenu de l'élément est attribué.
   attribute who {
-    list { xsd:anyURI+ }
+    list {
+      xsd:anyURI { pattern = "\S+" }+
+    }
   }?
 att.ascribed.directed.attributes =
   att.ascribed.attributes, att.ascribed.directed.attribute.toWhom
@@ -64,7 +59,9 @@ att.ascribed.directed.attribute.toWhom =
   
   ## indicates the person, or group of people, to whom a speech act or action is directed.
   attribute toWhom {
-    list { xsd:anyURI+ }
+    list {
+      xsd:anyURI { pattern = "\S+" }+
+    }
   }?
 att.canonical.attributes =
   att.canonical.attribute.key, att.canonical.attribute.ref
@@ -76,7 +73,9 @@ att.canonical.attribute.ref =
   
   ## (référence) fournit un moyen explicite de localiser une définition complète de l'entité nommée au moyen d'un ou plusieurs URIs.
   attribute ref {
-    list { xsd:anyURI+ }
+    list {
+      xsd:anyURI { pattern = "\S+" }+
+    }
   }?
 att.ranging.attributes =
   att.ranging.attribute.atLeast,
@@ -126,7 +125,9 @@ att.ranging.attribute.confidence =
       ", or the proportion of observed values that fall within that range."
     ]
   ]
-  attribute confidence { xsd:double }?
+  attribute confidence {
+    xsd:double { minInclusive = "0" maxInclusive = "1" }
+  }?
 att.dimensions.attributes =
   att.ranging.attributes,
   att.dimensions.attribute.unit,
@@ -196,7 +197,9 @@ att.written.attributes = att.written.attribute.hand
 att.written.attribute.hand =
   
   ## signale la main de celui qui est intervenue.
-  attribute hand { xsd:anyURI }?
+  attribute hand {
+    xsd:anyURI { pattern = "\S+" }
+  }?
 att.damaged.attributes =
   att.dimensions.attributes,
   att.written.attributes,
@@ -221,7 +224,7 @@ att.damaged.attribute.degree =
     ]
   ]
   attribute degree {
-    xsd:double
+    xsd:double { minInclusive = "0" maxInclusive = "1" }
     | (
        ##
        "high"
@@ -388,60 +391,64 @@ att.datable.attributes =
   att.datable.w3c.attributes,
   att.datable.iso.attributes,
   att.datable.custom.attributes,
-  att.datable.attribute.calendar,
   att.datable.attribute.period
-att.datable.attribute.calendar =
-  
-  ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
-  attribute calendar {
-    list { xsd:anyURI+ }
-  }?
-sch:pattern [
-  id = "test21-att.datable-calendar-calendar-constraint-rule-4"
-  "\x{a}" ~
-  "      "
-  sch:rule [
-    context = "tei:*[@calendar]"
-    "\x{a}" ~
-    "         "
-    sch:assert [
-      test = "string-length(.) gt 0"
-      " @calendar indicates one or more systems or calendars to\x{a}" ~
-      "              which the date represented by the content of this element belongs, but this\x{a}" ~
-      "              "
-      sch:name [ ]
-      " element has no textual content."
-    ]
-    "\x{a}" ~
-    "      "
-  ]
-  "\x{a}" ~
-  "   "
-]
 att.datable.attribute.period =
   
   ## fournit un pointeur vers un emplacement donné définissant une période de temps nommée durant laquelle l'item concerné s'inscrit.
   attribute period {
-    list { xsd:anyURI+ }
+    list {
+      xsd:anyURI { pattern = "\S+" }+
+    }
   }?
 att.datcat.attributes =
-  att.datcat.attribute.datcat, att.datcat.attribute.valueDatcat
+  att.datcat.attribute.datcat,
+  att.datcat.attribute.valueDatcat,
+  att.datcat.attribute.targetDatcat
 att.datcat.attribute.datcat =
-  
-  ## contains a PID (persistent identifier) that aligns the given element with the appropriate Data Category (or categories) in ISOcat.
-  attribute ns2:datcat {
-    list { xsd:anyURI+ }
+  [
+    a:documentation [
+      "provides a pointer to a definition of, and/or general information about, (a) an information container (element or attribute) or (b) a value of an information container (element content or attribute value), by referencing an external taxonomy or ontology. If "
+      ns1:code [ "@valueDatcat" ]
+      " is present in the immediate context, this attribute takes on role (a), while "
+      ns1:code [ "@valueDatcat" ]
+      " performs role (b)."
+    ]
+  ]
+  attribute datcat {
+    list {
+      xsd:anyURI { pattern = "\S+" }+
+    }
   }?
 att.datcat.attribute.valueDatcat =
-  
-  ## contains a PID (persistent identifier) that aligns the content of the given element or the value of the given attribute with the appropriate simple Data Category (or categories) in ISOcat.
-  attribute ns2:valueDatcat {
-    list { xsd:anyURI+ }
+  [
+    a:documentation [
+      "provides a definition of, and/or general information about a value of an information container (element content or attribute value), by reference to an external taxonomy or ontology. Used especially where a contrast with "
+      ns1:code [ "@datcat" ]
+      " is needed."
+    ]
+  ]
+  attribute valueDatcat {
+    list {
+      xsd:anyURI { pattern = "\S+" }+
+    }
+  }?
+att.datcat.attribute.targetDatcat =
+  [
+    a:documentation [
+      "provides a definition of, and/or general information about, information structure of an object referenced or modeled by the containing element, by reference to an external taxonomy or ontology. This attribute has the characteristics of the "
+      ns1:code [ "@datcat" ]
+      " attribute, except that it addresses not its containing element, but an object that is being referenced or modeled by its containing element."
+    ]
+  ]
+  attribute targetDatcat {
+    list {
+      xsd:anyURI { pattern = "\S+" }+
+    }
   }?
 att.declarable.attributes = att.declarable.attribute.default
 att.declarable.attribute.default =
   
-  ## Indique si oui ou non cet élément est affecté par défaut quand son élément parent a été sélectionné.
+  ## indique si oui ou non cet élément est affecté par défaut quand son élément parent a été sélectionné.
   [ a:defaultValue = "false" ]
   attribute default {
     
@@ -454,9 +461,11 @@ att.declarable.attribute.default =
 att.declaring.attributes = att.declaring.attribute.decls
 att.declaring.attribute.decls =
   
-  ## identifie un ou plusieurséléments déclarables dans l'en-tête TEI, qui sont destinés à s'appliquer à l'élément portant cet attribut et à son contenu.
+  ## (déclarations) identifie un ou plusieurséléments déclarables dans l'en-tête TEI, qui sont destinés à s'appliquer à l'élément portant cet attribut et à son contenu.
   attribute decls {
-    list { xsd:anyURI+ }
+    list {
+      xsd:anyURI { pattern = "\S+" }+
+    }
   }?
 att.fragmentable.attributes = att.fragmentable.attribute.part
 att.fragmentable.attribute.part =
@@ -533,7 +542,7 @@ att.global.responsibility.attribute.cert =
   
   ## (certitude) donne le degré de certitude associée à l'intervention ou à l'interprétation.
   attribute cert {
-    xsd:double
+    xsd:double { minInclusive = "0" maxInclusive = "1" }
     | (
        ##
        "high"
@@ -551,7 +560,9 @@ att.global.responsibility.attribute.resp =
   
   ## (responsable) indique l'agent responsable de l'intervention ou de l'interprétation, par exemple un éditeur ou un transcripteur.
   attribute resp {
-    list { xsd:anyURI+ }
+    list {
+      xsd:anyURI { pattern = "\S+" }+
+    }
   }?
 att.editLike.attributes =
   att.editLike.attribute.evidence, att.editLike.attribute.instant
@@ -606,15 +617,53 @@ att.global.rendition.attribute.rendition =
   
   ## pointe vers une description du rendu ou de la présentation utilisés pour cet élément dans le texte source
   attribute rendition {
-    list { xsd:anyURI+ }
+    list {
+      xsd:anyURI { pattern = "\S+" }+
+    }
   }?
 att.global.source.attributes = att.global.source.attribute.source
 att.global.source.attribute.source =
   
   ## specifies the source from which some aspect of this element is drawn.
   attribute source {
-    list { xsd:anyURI+ }
+    list {
+      xsd:anyURI { pattern = "\S+" }+
+    }
   }?
+sch:pattern [
+  id =
+    "test21-att.global.source-source-only_1_ODD_source-constraint-rule-4"
+  "\x{a}" ~
+  "      "
+  sch:rule [
+    context = "tei:*[@source]"
+    "\x{a}" ~
+    "         "
+    sch:let [
+      name = "srcs"
+      value = "tokenize( normalize-space(@source),' ')"
+    ]
+    "\x{a}" ~
+    "         "
+    sch:report [
+      test =
+        "( self::tei:classRef               | self::tei:dataRef               | self::tei:elementRef               | self::tei:macroRef               | self::tei:moduleRef               | self::tei:schemaSpec )               and               $srcs[2]"
+      "\x{a}" ~
+      "              When used on a schema description element (like\x{a}" ~
+      "              "
+      sch:value-of [ select = "name(.)" ]
+      "), the @source attribute\x{a}" ~
+      "              should have only 1 value. (This one has "
+      sch:value-of [ select = "count($srcs)" ]
+      ".)\x{a}" ~
+      "            "
+    ]
+    "\x{a}" ~
+    "      "
+  ]
+  "\x{a}" ~
+  "   "
+]
 att.global.attributes =
   att.global.rendition.attributes,
   att.global.linking.attributes,
@@ -634,7 +683,7 @@ att.global.attribute.xmllang =
   [
     a:documentation [
       "(langue) indique la langue du contenu de l'élément en utilisant les codes du "
-      ns1:a [ href = "http://www.ietf.org/rfc/rfc3066.txt" "RFC 3066" ]
+      ns1:a [ href = "https://www.ietf.org/rfc/rfc3066.txt" "RFC 3066" ]
       "\x{a}" ~
       "            "
     ]
@@ -648,7 +697,9 @@ att.global.attribute.xmllang =
 att.global.attribute.xmlbase =
   
   ## donne une référence URI de base au moyen de laquelle les applications peuvent résoudre des références d'URI relatives en références d'URI absolues
-  attribute xml:base { xsd:anyURI }?
+  attribute xml:base {
+    xsd:anyURI { pattern = "\S+" }
+  }?
 att.global.attribute.xmlspace =
   
   ## signale que les applications doivent préserver l'espace blanc
@@ -680,7 +731,9 @@ att.handFeatures.attribute.scribeRef =
     ]
   ]
   attribute scribeRef {
-    list { xsd:anyURI+ }
+    list {
+      xsd:anyURI { pattern = "\S+" }+
+    }
   }?
 att.handFeatures.attribute.script =
   
@@ -697,7 +750,9 @@ att.handFeatures.attribute.scriptRef =
     ]
   ]
   attribute scriptRef {
-    list { xsd:anyURI+ }
+    list {
+      xsd:anyURI { pattern = "\S+" }+
+    }
   }?
 att.handFeatures.attribute.medium =
   
@@ -709,7 +764,7 @@ att.handFeatures.attribute.medium =
   }?
 att.handFeatures.attribute.scope =
   
-  ## Spécifie la fréquence d'apparition de cette main dans le manuscrit.
+  ## spécifie la fréquence d'apparition de cette main dans le manuscrit.
   attribute scope {
     
     ## il n'y a que cette main dans le manuscrit.
@@ -741,7 +796,7 @@ att.media.attribute.width =
   attribute width {
     xsd:token {
       pattern =
-        "[\-+]?\d+(\.\d+)?(%|cm|mm|in|pt|pc|px|em|ex|gd|rem|vw|vh|vm)"
+        "[\-+]?\d+(\.\d+)?(%|cm|mm|in|pt|pc|px|em|ex|ch|rem|vw|vh|vmin|vmax)"
     }
   }?
 att.media.attribute.height =
@@ -750,7 +805,7 @@ att.media.attribute.height =
   attribute height {
     xsd:token {
       pattern =
-        "[\-+]?\d+(\.\d+)?(%|cm|mm|in|pt|pc|px|em|ex|gd|rem|vw|vh|vm)"
+        "[\-+]?\d+(\.\d+)?(%|cm|mm|in|pt|pc|px|em|ex|ch|rem|vw|vh|vmin|vmax)"
     }
   }?
 att.media.attribute.scale =
@@ -765,7 +820,9 @@ att.resourced.attributes = att.resourced.attribute.url
 att.resourced.attribute.url =
   
   ## (adresse URL) specifies the URL from which the media concerned may be obtained.
-  attribute url { xsd:anyURI }
+  attribute url {
+    xsd:anyURI { pattern = "\S+" }
+  }
 att.measurement.attributes =
   att.measurement.attribute.unit,
   att.measurement.attribute.unitRef,
@@ -813,7 +870,7 @@ att.measurement.attribute.unit =
       ## (centimètre) 
       "cm"
     | 
-      ## (décibel) Voir remarques, ci-dessous.
+      ## (décibel) voir remarques, ci-dessous.
       "dB"
     | 
       ## (kilobit) 10³ ou 1000 bits
@@ -845,7 +902,9 @@ att.measurement.attribute.unitRef =
       " element that defines a unit of measure."
     ]
   ]
-  attribute unitRef { xsd:anyURI }?
+  attribute unitRef {
+    xsd:anyURI { pattern = "\S+" }
+  }?
 att.measurement.attribute.quantity =
   
   ## (quantité) spécifie le nombre des unités indiquées que comprend la mesure.
@@ -903,7 +962,9 @@ att.naming.attribute.nymRef =
   
   ## (référence au nom canonique) indique comment localiser la forme canonique (nym) des noms qui sont associés à l'objet nommé par l'élément qui le contient.
   attribute nymRef {
-    list { xsd:anyURI+ }
+    list {
+      xsd:anyURI { pattern = "\S+" }+
+    }
   }?
 att.notated.attributes = att.notated.attribute.notation
 att.notated.attribute.notation =
@@ -1044,7 +1105,9 @@ att.pointing.attribute.target =
   
   ## précise la cible de la référence en donnant une ou plusieurs références URI
   attribute target {
-    list { xsd:anyURI+ }
+    list {
+      xsd:anyURI { pattern = "\S+" }+
+    }
   }?
 att.pointing.attribute.evaluate =
   
@@ -1069,7 +1132,11 @@ att.pointing.group.attribute.domains =
   
   ## spécifie, facultativement, les identifiants des éléments englobant tous les éléments indiqués par le contenu de cet élément.
   attribute domains {
-    list { xsd:anyURI, xsd:anyURI, xsd:anyURI* }
+    list {
+      xsd:anyURI { pattern = "\S+" },
+      xsd:anyURI { pattern = "\S+" },
+      xsd:anyURI { pattern = "\S+" }*
+    }
   }?
 att.pointing.group.attribute.targFunc =
   [
@@ -1123,13 +1190,17 @@ att.edition.attribute.edRef =
   
   ## (edition reference) provides a pointer to the source edition in which the associated feature (for example, a page, column, or line break) occurs at this point in the text.
   attribute edRef {
-    list { xsd:anyURI+ }
+    list {
+      xsd:anyURI { pattern = "\S+" }+
+    }
   }?
 att.spanning.attributes = att.spanning.attribute.spanTo
 att.spanning.attribute.spanTo =
   
   ## indique la fin d'un passage introduit par l'élément portant cet attribut.
-  attribute spanTo { xsd:anyURI }?
+  attribute spanTo {
+    xsd:anyURI { pattern = "\S+" }
+  }?
 sch:pattern [
   id =
     "test21-att.spanning-spanTo-spanTo-points-to-following-constraint-rule-8"
@@ -1166,7 +1237,7 @@ att.styleDef.attribute.scheme =
     ## langage CSS (Cascading Stylesheet )
     "css"
     | 
-      ## Langage XSL (Extensible Stylesheet )Formatting Objects
+      ## langage XSL (Extensible Stylesheet )Formatting Objects
       "xslfo"
     | 
       ## description en texte libre non structuré.
@@ -1212,11 +1283,15 @@ att.timed.attributes =
 att.timed.attribute.start =
   
   ## indique dans un alignement temporel (un ordre chronologique) l'endroit où commence cet élément.
-  attribute start { xsd:anyURI }?
+  attribute start {
+    xsd:anyURI { pattern = "\S+" }
+  }?
 att.timed.attribute.end =
   
   ## indique l'endroit où se termine cet élément dans un alignement temporel.
-  attribute end { xsd:anyURI }?
+  attribute end {
+    xsd:anyURI { pattern = "\S+" }
+  }?
 att.transcriptional.attributes =
   att.editLike.attributes,
   att.written.attributes,
@@ -1306,6 +1381,11 @@ model.nameLike.agent_sequenceOptionalRepeatable =
   name*, orgName*, persName*
 model.nameLike.agent_sequenceRepeatable = name+, orgName+, persName+
 model.segLike = seg
+model.segLike_alternation = seg
+model.segLike_sequence = seg
+model.segLike_sequenceOptional = seg?
+model.segLike_sequenceOptionalRepeatable = seg*
+model.segLike_sequenceRepeatable = seg+
 model.hiLike = hi | q
 model.hiLike_alternation = hi | q
 model.hiLike_sequence = hi, q
@@ -1360,6 +1440,17 @@ model.emphLike_sequenceRepeatable =
   term+,
   title+
 model.highlighted = model.hiLike | model.emphLike
+model.highlighted_alternation =
+  model.hiLike_alternation | model.emphLike_alternation
+model.highlighted_sequence =
+  model.hiLike_sequence, model.emphLike_sequence
+model.highlighted_sequenceOptional =
+  model.hiLike_sequenceOptional?, model.emphLike_sequenceOptional?
+model.highlighted_sequenceOptionalRepeatable =
+  model.hiLike_sequenceOptionalRepeatable*,
+  model.emphLike_sequenceOptionalRepeatable*
+model.highlighted_sequenceRepeatable =
+  model.hiLike_sequenceRepeatable+, model.emphLike_sequenceRepeatable+
 model.dateLike = date | time
 model.dateLike_alternation = date | time
 model.dateLike_sequence = date, time
@@ -1410,6 +1501,12 @@ model.egLike_sequenceOptional = empty
 model.egLike_sequenceOptionalRepeatable = empty
 model.egLike_sequenceRepeatable = notAllowed
 model.graphicLike = media | graphic | binaryObject
+model.graphicLike_alternation = media | graphic | binaryObject
+model.graphicLike_sequence = media, graphic, binaryObject
+model.graphicLike_sequenceOptional = media?, graphic?, binaryObject?
+model.graphicLike_sequenceOptionalRepeatable =
+  media*, graphic*, binaryObject*
+model.graphicLike_sequenceRepeatable = media+, graphic+, binaryObject+
 model.offsetLike = offset | geogFeat
 model.offsetLike_alternation = offset | geogFeat
 model.offsetLike_sequence = offset, geogFeat
@@ -1430,6 +1527,76 @@ model.pPart.msdesc =
   | signatures
   | stamp
   | watermark
+model.pPart.msdesc_alternation =
+  catchwords
+  | dimensions
+  | heraldry
+  | locus
+  | locusGrp
+  | material
+  | objectType
+  | origDate
+  | origPlace
+  | secFol
+  | signatures
+  | stamp
+  | watermark
+model.pPart.msdesc_sequence =
+  catchwords,
+  dimensions,
+  heraldry,
+  locus,
+  locusGrp,
+  material,
+  objectType,
+  origDate,
+  origPlace,
+  secFol,
+  signatures,
+  stamp,
+  watermark
+model.pPart.msdesc_sequenceOptional =
+  catchwords?,
+  dimensions?,
+  heraldry?,
+  locus?,
+  locusGrp?,
+  material?,
+  objectType?,
+  origDate?,
+  origPlace?,
+  secFol?,
+  signatures?,
+  stamp?,
+  watermark?
+model.pPart.msdesc_sequenceOptionalRepeatable =
+  catchwords*,
+  dimensions*,
+  heraldry*,
+  locus*,
+  locusGrp*,
+  material*,
+  objectType*,
+  origDate*,
+  origPlace*,
+  secFol*,
+  signatures*,
+  stamp*,
+  watermark*
+model.pPart.msdesc_sequenceRepeatable =
+  catchwords+,
+  dimensions+,
+  heraldry+,
+  locus+,
+  locusGrp+,
+  material+,
+  objectType+,
+  origDate+,
+  origPlace+,
+  secFol+,
+  signatures+,
+  stamp+,
+  watermark+
 model.pPart.editorial = choice | abbr | expan | ex | am | subst
 model.pPart.editorial_alternation =
   choice | abbr | expan | ex | am | subst
@@ -1549,6 +1716,20 @@ model.pPart.transcriptional_sequenceRepeatable =
   retrace+,
   undo+
 model.pPart.edit = model.pPart.editorial | model.pPart.transcriptional
+model.pPart.edit_alternation =
+  model.pPart.editorial_alternation
+  | model.pPart.transcriptional_alternation
+model.pPart.edit_sequence =
+  model.pPart.editorial_sequence, model.pPart.transcriptional_sequence
+model.pPart.edit_sequenceOptional =
+  model.pPart.editorial_sequenceOptional?,
+  model.pPart.transcriptional_sequenceOptional?
+model.pPart.edit_sequenceOptionalRepeatable =
+  model.pPart.editorial_sequenceOptionalRepeatable*,
+  model.pPart.transcriptional_sequenceOptionalRepeatable*
+model.pPart.edit_sequenceRepeatable =
+  model.pPart.editorial_sequenceRepeatable+,
+  model.pPart.transcriptional_sequenceRepeatable+
 model.linePart =
   model.hiLike
   | choice
@@ -1567,7 +1748,17 @@ model.linePart =
   | retrace
   | undo
 model.ptrLike = ptr | ref
+model.ptrLike_alternation = ptr | ref
+model.ptrLike_sequence = ptr, ref
+model.ptrLike_sequenceOptional = ptr?, ref?
+model.ptrLike_sequenceOptionalRepeatable = ptr*, ref*
+model.ptrLike_sequenceRepeatable = ptr+, ref+
 model.lPart = notAllowed
+model.lPart_alternation = notAllowed
+model.lPart_sequence = empty
+model.lPart_sequenceOptional = empty
+model.lPart_sequenceOptionalRepeatable = empty
+model.lPart_sequenceRepeatable = notAllowed
 model.global.meta =
   index
   | link
@@ -1579,7 +1770,71 @@ model.global.meta =
   | altGrp
   | substJoin
   | listTranspose
+model.global.meta_alternation =
+  index
+  | link
+  | linkGrp
+  | timeline
+  | join
+  | joinGrp
+  | alt
+  | altGrp
+  | substJoin
+  | listTranspose
+model.global.meta_sequence =
+  index,
+  link,
+  linkGrp,
+  timeline,
+  join,
+  joinGrp,
+  alt,
+  altGrp,
+  substJoin,
+  listTranspose
+model.global.meta_sequenceOptional =
+  index?,
+  link?,
+  linkGrp?,
+  timeline?,
+  join?,
+  joinGrp?,
+  alt?,
+  altGrp?,
+  substJoin?,
+  listTranspose?
+model.global.meta_sequenceOptionalRepeatable =
+  index*,
+  link*,
+  linkGrp*,
+  timeline*,
+  join*,
+  joinGrp*,
+  alt*,
+  altGrp*,
+  substJoin*,
+  listTranspose*
+model.global.meta_sequenceRepeatable =
+  index+,
+  link+,
+  linkGrp+,
+  timeline+,
+  join+,
+  joinGrp+,
+  alt+,
+  altGrp+,
+  substJoin+,
+  listTranspose+
 model.milestoneLike = milestone | gb | pb | lb | cb | anchor | fw
+model.milestoneLike_alternation =
+  milestone | gb | pb | lb | cb | anchor | fw
+model.milestoneLike_sequence = milestone, gb, pb, lb, cb, anchor, fw
+model.milestoneLike_sequenceOptional =
+  milestone?, gb?, pb?, lb?, cb?, anchor?, fw?
+model.milestoneLike_sequenceOptionalRepeatable =
+  milestone*, gb*, pb*, lb*, cb*, anchor*, fw*
+model.milestoneLike_sequenceRepeatable =
+  milestone+, gb+, pb+, lb+, cb+, anchor+, fw+
 model.gLike = notAllowed
 model.oddDecl = notAllowed
 model.oddDecl_alternation = notAllowed
@@ -1588,7 +1843,17 @@ model.oddDecl_sequenceOptional = empty
 model.oddDecl_sequenceOptionalRepeatable = empty
 model.oddDecl_sequenceRepeatable = notAllowed
 model.phrase.xml = notAllowed
+model.phrase.xml_alternation = notAllowed
+model.phrase.xml_sequence = empty
+model.phrase.xml_sequenceOptional = empty
+model.phrase.xml_sequenceOptionalRepeatable = empty
+model.phrase.xml_sequenceRepeatable = notAllowed
 model.specDescLike = notAllowed
+model.specDescLike_alternation = notAllowed
+model.specDescLike_sequence = empty
+model.specDescLike_sequenceOptional = empty
+model.specDescLike_sequenceOptionalRepeatable = empty
+model.specDescLike_sequenceRepeatable = notAllowed
 model.biblLike = bibl | biblStruct | listBibl | biblFull | msDesc
 model.biblLike_alternation =
   bibl | biblStruct | listBibl | biblFull | msDesc
@@ -1666,6 +1931,11 @@ model.listLike_sequenceRepeatable =
   listObject+,
   listNym+
 model.noteLike = note | noteGrp
+model.noteLike_alternation = note | noteGrp
+model.noteLike_sequence = note, noteGrp
+model.noteLike_sequenceOptional = note?, noteGrp?
+model.noteLike_sequenceOptionalRepeatable = note*, noteGrp*
+model.noteLike_sequenceRepeatable = note+, noteGrp+
 model.lLike = l
 model.lLike_alternation = l
 model.lLike_sequence = l
@@ -1688,6 +1958,16 @@ model.entryPart = notAllowed
 model.eventLike = event | listEvent
 model.global.edit =
   gap | ellipsis | addSpan | damageSpan | delSpan | space
+model.global.edit_alternation =
+  gap | ellipsis | addSpan | damageSpan | delSpan | space
+model.global.edit_sequence =
+  gap, ellipsis, addSpan, damageSpan, delSpan, space
+model.global.edit_sequenceOptional =
+  gap?, ellipsis?, addSpan?, damageSpan?, delSpan?, space?
+model.global.edit_sequenceOptionalRepeatable =
+  gap*, ellipsis*, addSpan*, damageSpan*, delSpan*, space*
+model.global.edit_sequenceRepeatable =
+  gap+, ellipsis+, addSpan+, damageSpan+, delSpan+, space+
 model.divPart = model.lLike | model.pLike | lg | sp
 model.persStateLike =
   persName
@@ -1696,6 +1976,7 @@ model.persStateLike =
   | education
   | faith
   | floruit
+  | gender
   | langKnowledge
   | nationality
   | occupation
@@ -1895,6 +2176,7 @@ model.nameLike =
   | model.placeStateLike
   | rs
   | model.persNamePart
+  | eventName
   | objectName
   | idno
 model.nameLike_alternation =
@@ -1903,6 +2185,7 @@ model.nameLike_alternation =
   | model.placeStateLike_alternation
   | rs
   | model.persNamePart_alternation
+  | eventName
   | objectName
   | idno
 model.nameLike_sequence =
@@ -1911,6 +2194,7 @@ model.nameLike_sequence =
   model.placeStateLike_sequence,
   rs,
   model.persNamePart_sequence,
+  eventName,
   objectName,
   idno
 model.nameLike_sequenceOptional =
@@ -1919,6 +2203,7 @@ model.nameLike_sequenceOptional =
   model.placeStateLike_sequenceOptional?,
   rs?,
   model.persNamePart_sequenceOptional?,
+  eventName?,
   objectName?,
   idno?
 model.nameLike_sequenceOptionalRepeatable =
@@ -1927,6 +2212,7 @@ model.nameLike_sequenceOptionalRepeatable =
   model.placeStateLike_sequenceOptionalRepeatable*,
   rs*,
   model.persNamePart_sequenceOptionalRepeatable*,
+  eventName*,
   objectName*,
   idno*
 model.nameLike_sequenceRepeatable =
@@ -1935,6 +2221,7 @@ model.nameLike_sequenceRepeatable =
   model.placeStateLike_sequenceRepeatable+,
   rs+,
   model.persNamePart_sequenceRepeatable+,
+  eventName+,
   objectName+,
   idno+
 model.global =
@@ -1966,6 +2253,31 @@ model.pPart.data =
   | model.measureLike
   | model.addressLike
   | model.nameLike
+model.pPart.data_alternation =
+  model.dateLike_alternation
+  | model.measureLike_alternation
+  | model.addressLike_alternation
+  | model.nameLike_alternation
+model.pPart.data_sequence =
+  model.dateLike_sequence,
+  model.measureLike_sequence,
+  model.addressLike_sequence,
+  model.nameLike_sequence
+model.pPart.data_sequenceOptional =
+  model.dateLike_sequenceOptional?,
+  model.measureLike_sequenceOptional?,
+  model.addressLike_sequenceOptional?,
+  model.nameLike_sequenceOptional?
+model.pPart.data_sequenceOptionalRepeatable =
+  model.dateLike_sequenceOptionalRepeatable*,
+  model.measureLike_sequenceOptionalRepeatable*,
+  model.addressLike_sequenceOptionalRepeatable*,
+  model.nameLike_sequenceOptionalRepeatable*
+model.pPart.data_sequenceRepeatable =
+  model.dateLike_sequenceRepeatable+,
+  model.measureLike_sequenceRepeatable+,
+  model.addressLike_sequenceRepeatable+,
+  model.nameLike_sequenceRepeatable+
 model.inter =
   model.egLike
   | model.oddDecl
@@ -1987,6 +2299,13 @@ model.phrase =
   | model.specDescLike
   | model.pPart.data
   | ruby
+model.paraPart =
+  model.gLike
+  | model.lLike
+  | model.global
+  | model.inter
+  | model.phrase
+  | lg
 model.limitedPhrase =
   model.hiLike
   | model.emphLike
@@ -2069,7 +2388,9 @@ att.locatable.attribute.where =
     ]
   ]
   attribute where {
-    list { xsd:anyURI+ }
+    list {
+      xsd:anyURI { pattern = "\S+" }+
+    }
   }?
 model.correspActionPart =
   model.dateLike | model.addressLike | model.nameLike | note | noteGrp
@@ -2102,6 +2423,38 @@ att.personal.attribute.sort =
   ## (ordre) précise dans quel ordre est placé la composante par rapport aux autres dans le nom d'une personne.
   attribute sort { xsd:nonNegativeInteger }?
 model.placeLike = place
+att.calendarSystem.attributes = att.calendarSystem.attribute.calendar
+att.calendarSystem.attribute.calendar =
+  
+  ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+  attribute calendar {
+    list {
+      xsd:anyURI { pattern = "\S+" }+
+    }
+  }?
+sch:pattern [
+  id =
+    "test21-att.calendarSystem-calendar-calendar_attr_on_empty_element-constraint-rule-10"
+  "\x{a}" ~
+  "      "
+  sch:rule [
+    context = "tei:*[@calendar]"
+    "\x{a}" ~
+    "         "
+    sch:assert [
+      test = "string-length( normalize-space(.) ) gt 0"
+      " @calendar indicates one or more\x{a}" ~
+      "              systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+      "              but this "
+      sch:name [ ]
+      " element has no textual content."
+    ]
+    "\x{a}" ~
+    "      "
+  ]
+  "\x{a}" ~
+  "   "
+]
 att.milestoneUnit.attributes = att.milestoneUnit.attribute.unit
 att.milestoneUnit.attribute.unit =
   
@@ -2169,7 +2522,7 @@ p =
      }*)
     >> sch:pattern [
          id =
-           "test21-p-abstractModel-structure-p-in-ab-or-p-constraint-report-5"
+           "test21-p-abstractModel-structure-p-in-ab-or-p-constraint-rule-11"
          "\x{a}" ~
          "            "
          sch:rule [
@@ -2178,10 +2531,10 @@ p =
            "               "
            sch:report [
              test =
-               "    (ancestor::tei:ab or ancestor::tei:p)                          and not( ancestor::tei:floatingText                                 |parent::tei:exemplum                                 |parent::tei:item                                 |parent::tei:note                                 |parent::tei:q                                 |parent::tei:quote                                 |parent::tei:remarks                                 |parent::tei:said                                 |parent::tei:sp                                 |parent::tei:stage                                 |parent::tei:cell                                 |parent::tei:figure                                )"
+               "(ancestor::tei:ab or ancestor::tei:p) and                        not( ancestor::tei:floatingText                           | parent::tei:exemplum                           | parent::tei:item                           | parent::tei:note                           | parent::tei:q                           | parent::tei:quote                           | parent::tei:remarks                           | parent::tei:said                           | parent::tei:sp                           | parent::tei:stage                           | parent::tei:cell                           | parent::tei:figure )"
              "\x{a}" ~
-             "        Abstract model violation: Paragraphs may not occur inside other paragraphs or ab elements.\x{a}" ~
-             "      "
+             "          Abstract model violation: Paragraphs may not occur inside other paragraphs or ab elements.\x{a}" ~
+             "        "
            ]
            "\x{a}" ~
            "            "
@@ -2191,7 +2544,7 @@ p =
        ]
     >> sch:pattern [
          id =
-           "test21-p-abstractModel-structure-p-in-l-or-lg-constraint-report-6"
+           "test21-p-abstractModel-structure-p-in-l-or-lg-constraint-rule-12"
          "\x{a}" ~
          "            "
          sch:rule [
@@ -2200,10 +2553,10 @@ p =
            "               "
            sch:report [
              test =
-               "    (ancestor::tei:l or ancestor::tei:lg)                          and not( ancestor::tei:floatingText                                 |parent::tei:figure                                 |parent::tei:note                                )"
+               "( ancestor::tei:l  or  ancestor::tei:lg ) and                        not( ancestor::tei:floatingText                           | parent::tei:figure                           | parent::tei:note )"
              "\x{a}" ~
-             "        Abstract model violation: Lines may not contain higher-level structural elements such as div, p, or ab, unless p is a child of figure or note, or is a descendant of floatingText.\x{a}" ~
-             "      "
+             "          Abstract model violation: Lines may not contain higher-level structural elements such as div, p, or ab, unless p is a child of figure or note, or is a descendant of floatingText.\x{a}" ~
+             "        "
            ]
            "\x{a}" ~
            "            "
@@ -2394,7 +2747,7 @@ desc =
     macro.limitedContent
     >> sch:pattern [
          id =
-           "test21-desc-deprecationInfo-only-in-deprecated-constraint-rule-10"
+           "test21-desc-deprecationInfo-only-in-deprecated-constraint-rule-13"
          "\x{a}" ~
          "            "
          sch:rule [
@@ -2478,9 +2831,11 @@ rt =
     att.transcriptional.attributes,
     (
      ## supplies a pointer to the base being glossed by this ruby text.
-     attribute target { xsd:anyURI }?)
+     attribute target {
+       xsd:anyURI { pattern = "\S+" }
+     }?)
     >> sch:pattern [
-         id = "test21-rt-target-rt-target-not-span-constraint-report-7"
+         id = "test21-rt-target-rt-target-not-span-constraint-rule-14"
          "\x{a}" ~
          "            "
          sch:rule [
@@ -2489,8 +2844,7 @@ rt =
            "               "
            sch:report [
              test = "../@from | ../@to"
-             "When target= is\x{a}" ~
-             "            present, neither from= nor to= should be."
+             "When target= is present, neither from= nor to= should be."
            ]
            "\x{a}" ~
            "            "
@@ -2500,9 +2854,11 @@ rt =
        ],
     (
      ## points to the starting point of the span of text being glossed by this ruby text.
-     attribute from { xsd:anyURI }?)
+     attribute from {
+       xsd:anyURI { pattern = "\S+" }
+     }?)
     >> sch:pattern [
-         id = "test21-rt-from-rt-from-constraint-assert-7"
+         id = "test21-rt-from-rt-from-constraint-rule-15"
          "\x{a}" ~
          "            "
          sch:rule [
@@ -2511,8 +2867,7 @@ rt =
            "               "
            sch:assert [
              test = "../@to"
-             "When from= is present, the to=\x{a}" ~
-             "            attribute of "
+             "When from= is present, the to= attribute of "
              sch:name [ ]
              " is required."
            ]
@@ -2524,9 +2879,11 @@ rt =
        ],
     (
      ## points to the ending point of the span of text being glossed.
-     attribute to { xsd:anyURI }?)
+     attribute to {
+       xsd:anyURI { pattern = "\S+" }
+     }?)
     >> sch:pattern [
-         id = "test21-rt-to-rt-to-constraint-assert-8"
+         id = "test21-rt-to-rt-to-constraint-rule-16"
          "\x{a}" ~
          "            "
          sch:rule [
@@ -2535,8 +2892,7 @@ rt =
            "               "
            sch:assert [
              test = "../@from"
-             "When to= is present, the from=\x{a}" ~
-             "            attribute of "
+             "When to= is present, the from= attribute of "
              sch:name [ ]
              " is required."
            ]
@@ -2566,7 +2922,11 @@ choice =
   
   ## (choix) regroupe un certain nombre de balisages alternatifs possibles pour un même endroit dans un texte. [3.5. Simple Editorial Changes]
   element choice {
-    (model.choicePart | choice)+, att.global.attributes, empty
+    (model.choicePart | choice),
+    (model.choicePart | choice),
+    (model.choicePart | choice)*,
+    att.global.attributes,
+    empty
   }
 reg =
   
@@ -2673,7 +3033,7 @@ unclear =
     att.dimensions.attributes,
     
     ## indique pourquoi il est difficile de transcrire le document
-    ## Suggested values include: 1] illegible (illegible); 2] inaudible (inaudible); 3] faded (faded); 4] background_noise (background_noise); 5] eccentric_ductus (eccentric_ductus)
+    ## Suggested values include: 1] illegible (illegible); 2] inaudible (inaudible); 3] faded (faded); 4] background_noise (background noise); 5] eccentric_ductus (eccentric ductus)
     attribute reason {
       list {
         (
@@ -2686,10 +3046,10 @@ unclear =
            ## (faded) 
            "faded"
          | 
-           ## (background_noise) 
+           ## (background noise) 
            "background_noise"
          | 
-           ## (eccentric_ductus) indicates illegibility due to an unusual, awkward, or incompetent execution of a glyph or glyphs 
+           ## (eccentric ductus) indicates illegibility due to an unusual, awkward, or incompetent execution of a glyph or glyphs 
            "eccentric_ductus"
          | xsd:token { pattern = "[^\p{C}\p{Z}]+" })+
       }
@@ -2712,6 +3072,36 @@ name =
     att.datable.attributes,
     att.editLike.attributes,
     att.typed.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-name-calendar-calendar-check-name-constraint-rule-17"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 rs =
@@ -2797,6 +3187,7 @@ measure =
     att.global.attributes,
     att.typed.attribute.subtype,
     att.measurement.attributes,
+    att.ranging.attributes,
     
     ## précise le type de mesure exprimée dans la typologie adaptée.
     attribute type {
@@ -2838,6 +3229,7 @@ date =
     att.global.attributes,
     att.canonical.attributes,
     att.datable.attributes,
+    att.calendarSystem.attributes,
     att.editLike.attributes,
     att.dimensions.attributes,
     att.typed.attributes,
@@ -2850,6 +3242,7 @@ time =
     (text | model.gLike | model.phrase | model.global)*,
     att.global.attributes,
     att.datable.attributes,
+    att.calendarSystem.attributes,
     att.canonical.attributes,
     att.editLike.attributes,
     att.dimensions.attributes,
@@ -2890,7 +3283,7 @@ ptr =
   element ptr {
     empty
     >> sch:pattern [
-         id = "test21-ptr-ptrAtts-constraint-report-8"
+         id = "test21-ptr-ptrAtts-constraint-rule-18"
          "\x{a}" ~
          "            "
          sch:rule [
@@ -2899,8 +3292,7 @@ ptr =
            "               "
            sch:report [
              test = "@target and @cRef"
-             "Only one of the\x{a}" ~
-             "attributes @target and @cRef may be supplied on "
+             "Only one of the attributes @target and @cRef may be supplied on "
              sch:name [ ]
              "."
            ]
@@ -2934,7 +3326,7 @@ ref =
   element ref {
     macro.paraContent
     >> sch:pattern [
-         id = "test21-ref-refAtts-constraint-report-9"
+         id = "test21-ref-refAtts-constraint-rule-19"
          "\x{a}" ~
          "            "
          sch:rule [
@@ -2943,8 +3335,7 @@ ref =
            "               "
            sch:report [
              test = "@target and @cRef"
-             "Only one of the\x{a}" ~
-             "	attributes @target' and @cRef' may be supplied on "
+             "Only one of the attributes @target' and @cRef' may be supplied on "
              sch:name [ ]
              "\x{a}" ~
              "               "
@@ -2975,7 +3366,7 @@ ref =
      (model.divBottom, model.global*)*)
     >> sch:pattern [
          id =
-           "test21-list-gloss-list-must-have-labels-constraint-rule-11"
+           "test21-list-gloss-list-must-have-labels-constraint-rule-20"
          "\x{a}" ~
          "            "
          sch:rule [
@@ -3083,7 +3474,7 @@ note =
   }
 noteGrp =
   
-  ## contains a group of notes [3.9.1.1. Encoding Grouped Notes]
+  ## (note group) contains a group of notes [3.9.1.1. Encoding Grouped Notes]
   element noteGrp {
     (desc*, (note | noteGrp)+),
     att.global.attributes,
@@ -3137,6 +3528,7 @@ graphic =
     att.media.attributes,
     att.resourced.attributes,
     att.declaring.attributes,
+    att.typed.attributes,
     empty
   }
 binaryObject =
@@ -3191,7 +3583,7 @@ gb =
   }
 pb =
   
-  ## (saut de page) marque le début d'une page de texte dans un document paginé. [3.11.3. Milestone
+  ## (début de page) marque le début d'une page de texte dans un document paginé. [3.11.3. Milestone
   ## Elements]
   element pb {
     empty,
@@ -3204,7 +3596,7 @@ pb =
   }
 lb =
   
-  ## (saut de ligne) marque le début d'une nouvelle ligne (typographique) dans une édition ou dans une version d'un texte. [3.11.3. Milestone
+  ## (début de ligne) marque le début d'une nouvelle ligne (typographique) dans une édition ou dans une version d'un texte. [3.11.3. Milestone
   ## Elements 7.2.5. Speech Contents]
   element lb {
     empty,
@@ -3217,7 +3609,7 @@ lb =
   }
 cb =
   
-  ## (saut de colonne) marque le début d'une nouvelle colonne de texte sur une page multi-colonne. [3.11.3. Milestone
+  ## (début de colonne) marque le début d'une nouvelle colonne de texte sur une page multi-colonne. [3.11.3. Milestone
   ## Elements]
   element cb {
     empty,
@@ -3286,20 +3678,94 @@ author =
   
   ## (auteur) dans une référence bibliographique contient le nom de la (des) personne(s) physique(s) ou du collectif, auteur(s) d'une oeuvre ; par exemple dans la même forme que celle utilisée par une référence bibliographique reconnue. [3.12.2.2. Titles, Authors, and Editors 2.2.1. The Title Statement]
   element author {
-    macro.phraseSeq,
+    macro.phraseSeq
+    >> sch:pattern [
+         id = "test21-author-calendar-check-author-constraint-rule-21"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     att.global.attributes,
     att.naming.attribute.altname,
     att.naming.attribute.nymRef,
     att.canonical.attribute.key,
     att.canonical.attribute.ref,
     att.datable.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-author-calendar-calendar-check-author-constraint-rule-22"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 editor =
   
   ## mention de responsabilité secondaire pour un item bibliographique, par exemple le nom d'une personne, d'une institution ou d'un organisme (ou de plusieurs d'entre eux) comme éditeur scientifique, compilateur, traducteur, etc. [3.12.2.2. Titles, Authors, and Editors]
   element editor {
-    macro.phraseSeq,
+    macro.phraseSeq
+    >> sch:pattern [
+         id = "test21-editor-calendar-check-editor-constraint-rule-23"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     att.global.attributes,
     att.naming.attribute.altname,
     att.naming.attribute.nymRef,
@@ -3318,6 +3784,36 @@ editor =
            "us")+
       }
     }?,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-editor-calendar-calendar-check-editor-constraint-rule-24"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 respStmt =
@@ -3338,17 +3834,99 @@ resp =
     att.global.attributes,
     att.canonical.attributes,
     att.datable.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-resp-calendar-calendar-check-resp-constraint-rule-25"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 title =
   
   ## (titre) contient le titre complet d'une oeuvre quelconque [3.12.2.2. Titles, Authors, and Editors 2.2.1. The Title Statement 2.2.5. The Series Statement]
   element title {
-    (text | hi)*,
+    ((text | hi)*)
+    >> sch:pattern [
+         id = "test21-title-calendar-check-title-constraint-rule-26"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     att.global.attribute.xmlid,
     att.global.attribute.xmllang,
     att.canonical.attributes,
     att.datable.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-title-calendar-calendar-check-title-constraint-rule-27"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     
     ## indique le niveau bibliographique d'un titre, c'est-à-dire si ce titre identifie un article, un livre, une revue, une collection, ou un document non publié
     attribute level {
@@ -3378,6 +3956,36 @@ meeting =
     att.global.attributes,
     att.datable.attributes,
     att.canonical.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-meeting-calendar-calendar-check-meeting-constraint-rule-28"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 imprint =
@@ -3475,7 +4083,7 @@ relatedItem =
   element relatedItem {
     ((model.biblLike | model.ptrLike)?)
     >> sch:pattern [
-         id = "test21-relatedItem-targetorcontent1-constraint-report-10"
+         id = "test21-relatedItem-targetorcontent1-constraint-rule-29"
          "\x{a}" ~
          "            "
          sch:rule [
@@ -3484,18 +4092,15 @@ relatedItem =
            "               "
            sch:report [
              test = "@target and count( child::* ) > 0"
-             "\x{a}" ~
              "If the @target attribute on "
              sch:name [ ]
-             " is used, the\x{a}" ~
-             "relatedItem element must be empty"
+             " is used, the relatedItem element must be empty"
            ]
            "\x{a}" ~
            "               "
            sch:assert [
              test = "@target or child::*"
-             "A relatedItem element should have either a 'target' attribute\x{a}" ~
-             "        or a child element to indicate the related bibliographic item"
+             "A relatedItem element should have either a @target attribute or a child element to indicate the related bibliographic item"
            ]
            "\x{a}" ~
            "            "
@@ -3507,7 +4112,9 @@ relatedItem =
     att.typed.attributes,
     
     ## points to the related bibliographic element by means of an absolute or relative URI reference
-    attribute target { xsd:anyURI }?,
+    attribute target {
+      xsd:anyURI { pattern = "\S+" }
+    }?,
     empty
   }
 l =
@@ -3517,7 +4124,7 @@ l =
     ((text | model.gLike | model.phrase | model.inter | model.global)*)
     >> sch:pattern [
          id =
-           "test21-l-abstractModel-structure-l-in-l-constraint-report-11"
+           "test21-l-abstractModel-structure-l-in-l-constraint-rule-30"
          "\x{a}" ~
          "            "
          sch:rule [
@@ -3527,9 +4134,7 @@ l =
            sch:report [
              test =
                "ancestor::tei:l[not(.//tei:note//tei:l[. = current()])]"
-             "\x{a}" ~
-             "        Abstract model violation: Lines may not contain lines or lg elements.\x{a}" ~
-             "      "
+             "Abstract model violation: Lines may not contain lines or lg elements."
            ]
            "\x{a}" ~
            "            "
@@ -3546,15 +4151,20 @@ lg =
   ## (groupe de vers) contient un groupe de vers fonctionnant comme une unité formelle, par exemple une strophe, un refrain, un paragraphe en vers, etc. [3.13.1. Core Tags for Verse 3.13. Passages of Verse or Drama 7.2.5. Speech Contents]
   element lg {
     ((model.divTop | model.global)*,
-     (model.lLike | model.stageLike | model.labelLike | lg),
      (model.lLike
       | model.stageLike
       | model.labelLike
+      | model.pPart.transcriptional
+      | lg),
+     (model.lLike
+      | model.stageLike
+      | model.labelLike
+      | model.pPart.transcriptional
       | model.global
       | lg)*,
      (model.divBottom, model.global*)*)
     >> sch:pattern [
-         id = "test21-lg-atleast1oflggapl-constraint-assert-11"
+         id = "test21-lg-atleast1oflggapl-constraint-rule-31"
          "\x{a}" ~
          "            "
          sch:rule [
@@ -3564,8 +4174,7 @@ lg =
            sch:assert [
              test =
                "count(descendant::tei:lg|descendant::tei:l|descendant::tei:gap) > 0"
-             "An lg element\x{a}" ~
-             "        must contain at least one child l, lg, or gap element."
+             "An lg element must contain at least one child l, lg, or gap element."
            ]
            "\x{a}" ~
            "            "
@@ -3575,7 +4184,7 @@ lg =
        ]
     >> sch:pattern [
          id =
-           "test21-lg-abstractModel-structure-lg-in-l-constraint-report-12"
+           "test21-lg-abstractModel-structure-lg-in-l-constraint-rule-32"
          "\x{a}" ~
          "            "
          sch:rule [
@@ -3585,9 +4194,7 @@ lg =
            sch:report [
              test =
                "ancestor::tei:l[not(.//tei:note//tei:lg[. = current()])]"
-             "\x{a}" ~
-             "        Abstract model violation: Lines may not contain line groups.\x{a}" ~
-             "      "
+             "Abstract model violation: Lines may not contain line groups."
            ]
            "\x{a}" ~
            "            "
@@ -3641,6 +4248,7 @@ stage =
     att.ascribed.directed.attributes,
     att.global.attributes,
     att.placement.attributes,
+    att.written.attributes,
     
     ## indique le type d'indication scénique
     ## Suggested values include: 1] setting; 2] entrance; 3] exit; 4] business; 5] novelistic; 6] delivery; 7] modifier; 8] location; 9] mixed
@@ -3732,7 +4340,7 @@ textLang =
     ]
   ]
   element textLang {
-    macro.phraseSeq,
+    macro.specialPara,
     att.global.attributes,
     
     ## (langue principale) contient un code identifiant la langue principale du manuscrit.
@@ -3805,7 +4413,9 @@ att.datable.custom.attribute.to-custom =
 att.datable.custom.attribute.datingPoint =
   
   ## supplies a pointer to some location defining a named point in time with reference to which the datable item is understood to have occurred
-  attribute datingPoint { xsd:anyURI }?
+  attribute datingPoint {
+    xsd:anyURI { pattern = "\S+" }
+  }?
 att.datable.custom.attribute.datingMethod =
   [
     a:documentation [
@@ -3814,7 +4424,9 @@ att.datable.custom.attribute.datingMethod =
       " element or other means of interpreting the values of the custom dating attributes."
     ]
   ]
-  attribute datingMethod { xsd:anyURI }?
+  attribute datingMethod {
+    xsd:anyURI { pattern = "\S+" }
+  }?
 model.persNamePart =
   surname
   | forename
@@ -3865,7 +4477,7 @@ att.datable.iso.attributes =
   att.datable.iso.attribute.to-iso
 att.datable.iso.attribute.when-iso =
   
-  ## précise une date exacte pour l'évènement selon la forme normalisée ISO 8601, c'est-à-dire aaaa-mm-jj.
+  ## précise une date exacte pour l'évènement selon la forme normalisée ISO 8601:2004, c'est-à-dire aaaa-mm-jj.
   attribute when-iso {
     xsd:date
     | xsd:gYear
@@ -3907,7 +4519,7 @@ att.datable.iso.attribute.notAfter-iso =
   }?
 att.datable.iso.attribute.from-iso =
   
-  ## Indique le point de départ de la période sous une forme normalisée
+  ## indique le point de départ de la période sous une forme normalisée
   attribute from-iso {
     xsd:date
     | xsd:gYear
@@ -3921,7 +4533,7 @@ att.datable.iso.attribute.from-iso =
   }?
 att.datable.iso.attribute.to-iso =
   
-  ## Indique le point final de la période sous une forme normalisée
+  ## indique le point final de la période sous une forme normalisée
   attribute to-iso {
     xsd:date
     | xsd:gYear
@@ -3943,6 +4555,36 @@ orgName =
     att.editLike.attributes,
     att.personal.attributes,
     att.typed.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-orgName-calendar-calendar-check-orgName-constraint-rule-33"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 persName =
@@ -3955,6 +4597,36 @@ persName =
     att.editLike.attributes,
     att.personal.attributes,
     att.typed.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-persName-calendar-calendar-check-persName-constraint-rule-34"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 surname =
@@ -4017,7 +4689,30 @@ placeName =
   
   ## (nom de lieu) contient un nom de lieu absolu ou relatif. [13.2.3. Place Names]
   element placeName {
-    macro.phraseSeq,
+    macro.phraseSeq
+    >> sch:pattern [
+         id =
+           "test21-placeName-calendar-check-placeName-constraint-rule-35"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     att.datable.attributes,
     att.editLike.attributes,
     att.global.attributes,
@@ -4026,6 +4721,36 @@ placeName =
     
     ## alternative
     attribute alt { text }?,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-placeName-calendar-calendar-check-placeName-constraint-rule-36"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 bloc =
@@ -4037,6 +4762,36 @@ bloc =
     att.naming.attributes,
     att.typed.attributes,
     att.datable.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-bloc-calendar-calendar-check-bloc-constraint-rule-37"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 country =
@@ -4048,6 +4803,36 @@ country =
     att.naming.attributes,
     att.typed.attributes,
     att.datable.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-country-calendar-calendar-check-country-constraint-rule-38"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 region =
@@ -4059,6 +4844,36 @@ region =
     att.naming.attributes,
     att.typed.attributes,
     att.datable.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-region-calendar-calendar-check-region-constraint-rule-39"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 settlement =
@@ -4070,6 +4885,36 @@ settlement =
     att.naming.attributes,
     att.typed.attributes,
     att.datable.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-settlement-calendar-calendar-check-settlement-constraint-rule-40"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 district =
@@ -4081,6 +4926,36 @@ district =
     att.naming.attributes,
     att.typed.attributes,
     att.datable.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-district-calendar-calendar-check-district-constraint-rule-41"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 offset =
@@ -4094,6 +4969,36 @@ offset =
     att.naming.attributes,
     att.typed.attributes,
     att.dimensions.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-offset-calendar-calendar-check-offset-constraint-rule-42"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 geogName =
@@ -4106,6 +5011,36 @@ geogName =
     att.global.attributes,
     att.naming.attributes,
     att.typed.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-geogName-calendar-calendar-check-geogName-constraint-rule-43"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 geogFeat =
@@ -4119,6 +5054,48 @@ geogFeat =
     att.naming.attributes,
     att.typed.attributes,
     att.dimensions.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-geogFeat-calendar-calendar-check-geogFeat-constraint-rule-44"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
+    empty
+  }
+eventName =
+  
+  ## (name of an event) contains a proper noun or noun phrase used to refer to an event. [13.2.4. Event Names]
+  element eventName {
+    macro.phraseSeq,
+    att.global.attributes,
+    att.datable.attributes,
+    att.editLike.attributes,
+    att.personal.attributes,
+    att.typed.attributes,
     empty
   }
 affiliation =
@@ -4137,6 +5114,36 @@ affiliation =
     attribute type {
       xsd:token { pattern = "[^\p{C}\p{Z}]+" }
     }?,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-affiliation-calendar-calendar-check-affiliation-constraint-rule-45"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 age =
@@ -4155,6 +5162,36 @@ age =
     attribute type {
       xsd:token { pattern = "[^\p{C}\p{Z}]+" }
     }?,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-age-calendar-calendar-check-age-constraint-rule-46"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     
     ## fournit un code numérique représentant l'âge ou la tranche d'âge.
     attribute value { xsd:nonNegativeInteger }?,
@@ -4177,6 +5214,36 @@ birth =
     attribute type {
       xsd:token { pattern = "[^\p{C}\p{Z}]+" }
     }?,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-birth-calendar-calendar-check-birth-constraint-rule-47"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 climate =
@@ -4192,6 +5259,36 @@ climate =
     att.editLike.attributes,
     att.naming.attributes,
     att.typed.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-climate-calendar-calendar-check-climate-constraint-rule-48"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 death =
@@ -4211,6 +5308,36 @@ death =
     attribute type {
       xsd:token { pattern = "[^\p{C}\p{Z}]+" }
     }?,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-death-calendar-calendar-check-death-constraint-rule-49"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 education =
@@ -4229,24 +5356,88 @@ education =
     attribute type {
       xsd:token { pattern = "[^\p{C}\p{Z}]+" }
     }?,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-education-calendar-calendar-check-education-constraint-rule-50"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 event =
   
-  ## (évènement) contient des données liées à tout type d'évènement significatif dans l'existence d'une personne, d'un lieu ou d'une organisation. [13.3.1. Basic Principles]
+  ## (évènement) contient des données liées à tout type d'évènement significatif dans l'existence d'une personne, d'un lieu, d'un objet ou d'une organisation. [13.3.1. Basic Principles]
   element event {
     (idno*,
      model.headLike*,
-     (model.pLike+ | model.labelLike+),
+     (model.pLike+ | model.labelLike+ | eventName+),
      (model.noteLike | model.biblLike | linkGrp | link | idno | ptr)*,
-     event*),
+     model.eventLike*,
+     (model.personLike | listPerson)*,
+     (model.placeLike | listPlace)*,
+     model.objectLike*,
+     (relation | listRelation)*),
     att.global.attributes,
     att.datable.attributes,
     att.editLike.attributes,
-    att.typed.attributes,
+    att.locatable.attributes,
     att.naming.attributes,
     att.sortable.attributes,
-    att.locatable.attributes,
+    att.typed.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-event-calendar-calendar-check-event-constraint-rule-51"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "            systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "            but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 faith =
@@ -4265,6 +5456,36 @@ faith =
     attribute type {
       xsd:token { pattern = "[^\p{C}\p{Z}]+" }
     }?,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-faith-calendar-calendar-check-faith-constraint-rule-52"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 floruit =
@@ -4276,6 +5497,84 @@ floruit =
     att.datable.attributes,
     att.dimensions.attributes,
     att.editLike.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-floruit-calendar-calendar-check-floruit-constraint-rule-53"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
+    empty
+  }
+gender =
+  
+  ## (gender) specifies the gender identity of a person, persona, or character. [13.3.2.1. Personal Characteristics]
+  element gender {
+    macro.phraseSeq,
+    att.global.attributes,
+    att.editLike.attributes,
+    att.datable.attributes,
+    att.typed.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-gender-calendar-calendar-check-gender-constraint-rule-54"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
+    
+    ## supplies a coded value for gender identity
+    attribute value {
+      list {
+        xsd:token { pattern = "[^\p{C}\p{Z}]+" }+
+      }
+    }?,
     empty
   }
 geo =
@@ -4304,6 +5603,36 @@ langKnowledge =
     attribute type {
       xsd:token { pattern = "[^\p{C}\p{Z}]+" }
     }?,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-langKnowledge-calendar-calendar-check-langKnowledge-constraint-rule-55"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     
     ## fournit un ou plusieurs codes de langue valides pour les langues spécifiées.
     attribute tags {
@@ -4324,6 +5653,36 @@ langKnown =
     att.global.attributes,
     att.datable.attributes,
     att.editLike.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-langKnown-calendar-calendar-check-langKnown-constraint-rule-56"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     
     ## fournit un code de langue valide pour la langue concernée.
     attribute tag {
@@ -4422,6 +5781,36 @@ location =
     att.typed.attributes,
     att.datable.attributes,
     att.editLike.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-location-calendar-calendar-check-location-constraint-rule-57"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 nationality =
@@ -4440,6 +5829,36 @@ nationality =
     attribute type {
       xsd:token { pattern = "[^\p{C}\p{Z}]+" }
     }?,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-nationality-calendar-calendar-check-nationality-constraint-rule-58"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 occupation =
@@ -4458,6 +5877,36 @@ occupation =
     attribute type {
       xsd:token { pattern = "[^\p{C}\p{Z}]+" }
     }?,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-occupation-calendar-calendar-check-occupation-constraint-rule-59"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     [
       a:documentation [
         "identifie le système de classification ou la taxinomie utilisés, en fournissant l'identifiant d'un élément "
@@ -4465,7 +5914,9 @@ occupation =
         " déclaré ailleurs dans l'en-tête."
       ]
     ]
-    attribute scheme { xsd:anyURI }?,
+    attribute scheme {
+      xsd:anyURI { pattern = "\S+" }
+    }?,
     [
       a:documentation [
         "contient un code d'activité défini dans le système de classification ou dans la taxonomie déclaré dans l'attribut "
@@ -4473,7 +5924,9 @@ occupation =
         "."
       ]
     ]
-    attribute code { xsd:anyURI }?,
+    attribute code {
+      xsd:anyURI { pattern = "\S+" }
+    }?,
     empty
   }
 org =
@@ -4530,6 +5983,13 @@ person =
       }
     }?,
     
+    ## specifies the gender of the person.
+    attribute gender {
+      list {
+        xsd:token { pattern = "[^\p{C}\p{Z}]+" }+
+      }
+    }?,
+    
     ## précise une tranche d'âge pour la personne.
     attribute age {
       xsd:token { pattern = "[^\p{C}\p{Z}]+" }
@@ -4559,6 +6019,13 @@ persona =
       }
     }?,
     
+    ## specifies the gender of the persona.
+    attribute gender {
+      list {
+        xsd:token { pattern = "[^\p{C}\p{Z}]+" }+
+      }
+    }?,
+    
     ## précise une tranche d'âge pour la personne.
     attribute age {
       xsd:token { pattern = "[^\p{C}\p{Z}]+" }
@@ -4580,6 +6047,13 @@ personGrp =
     
     ## précise le sexe du groupe participant.
     attribute sex {
+      list {
+        xsd:token { pattern = "[^\p{C}\p{Z}]+" }+
+      }
+    }?,
+    
+    ## specifies the gender of the participant group.
+    attribute gender {
       list {
         xsd:token { pattern = "[^\p{C}\p{Z}]+" }+
       }
@@ -4621,6 +6095,36 @@ persPronouns =
         "trustedThirdParty"
       | xsd:token { pattern = "[^\p{C}\p{Z}]+" }
     }?,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-persPronouns-calendar-calendar-check-persPronouns-constraint-rule-60"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     
     ## (value) supplies a regularized value for personal pronouns.
     ## Sample values include: 1] e (e); 2] he (he); 3] she (she); 4] they (they)
@@ -4663,6 +6167,36 @@ population =
     att.naming.attributes,
     att.typed.attributes,
     att.dimensions.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-population-calendar-calendar-check-population-constraint-rule-61"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 relation =
@@ -4671,7 +6205,7 @@ relation =
   element relation {
     (desc?)
     >> sch:pattern [
-         id = "test21-relation-reforkeyorname-constraint-assert-12"
+         id = "test21-relation-ref-or-key-or-name-constraint-rule-62"
          "\x{a}" ~
          "            "
          sch:rule [
@@ -4680,7 +6214,7 @@ relation =
            "               "
            sch:assert [
              test = "@ref or @key or @name"
-             "One of the attributes  'name', 'ref' or 'key' must be supplied"
+             "One of the attributes @name, @ref or @key must be supplied"
            ]
            "\x{a}" ~
            "            "
@@ -4689,7 +6223,7 @@ relation =
          "         "
        ]
     >> sch:pattern [
-         id = "test21-relation-activemutual-constraint-report-13"
+         id = "test21-relation-active-mutual-constraint-rule-63"
          "\x{a}" ~
          "            "
          sch:rule [
@@ -4707,7 +6241,7 @@ relation =
          "         "
        ]
     >> sch:pattern [
-         id = "test21-relation-activepassive-constraint-report-14"
+         id = "test21-relation-active-passive-constraint-rule-64"
          "\x{a}" ~
          "            "
          sch:rule [
@@ -4716,7 +6250,7 @@ relation =
            "               "
            sch:report [
              test = "@passive and not(@active)"
-             "the attribute 'passive' may be supplied only if the attribute 'active' is supplied"
+             "the attribute @passive may be supplied only if the attribute @active is supplied"
            ]
            "\x{a}" ~
            "            "
@@ -4730,6 +6264,36 @@ relation =
     att.canonical.attributes,
     att.sortable.attributes,
     att.typed.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-relation-calendar-calendar-check-relation-constraint-rule-65"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "              systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "              but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     
     ## fournit un nom pour le type de relation dont elle est une instance.
     attribute name {
@@ -4738,17 +6302,23 @@ relation =
     (
      ## identifie les participants actifs dans une relation à sens unique, ou tous les participants dans une relation réciproque.
      attribute active {
-       list { xsd:anyURI+ }
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
      }?
      | 
        ## fournit une liste de participants entre lesquels la relation est réciproque.
        attribute mutual {
-         list { xsd:anyURI+ }
+         list {
+           xsd:anyURI { pattern = "\S+" }+
+         }
        }?),
     
     ## identifie les participants passifs dans une relation non mutuelle.
     attribute passive {
-      list { xsd:anyURI+ }
+      list {
+        xsd:anyURI { pattern = "\S+" }+
+      }
     }?,
     empty
   }
@@ -4768,23 +6338,77 @@ residence =
     attribute type {
       xsd:token { pattern = "[^\p{C}\p{Z}]+" }
     }?,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-residence-calendar-calendar-check-residence-constraint-rule-66"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 sex =
   
-  ## (sexe) précise le sexe d'une personne. [13.3.2.1. Personal Characteristics]
+  ## (sexe) précise le sexe d'un organisme. [13.3.2.1. Personal Characteristics]
   element sex {
     macro.phraseSeq,
     att.global.attributes,
     att.editLike.attributes,
     att.datable.attributes,
-    att.typed.attribute.subtype,
-    
-    ## caractérise l'élément en utilisant n'importe quel système ou typologie de classification approprié.
-    ## Sample values include: 1] explicit; 2] implicit
-    attribute type {
-      xsd:token { pattern = "[^\p{C}\p{Z}]+" }
-    }?,
+    att.typed.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-sex-calendar-calendar-check-sex-constraint-rule-67"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     
     ## supplies a coded value for sex
     attribute value {
@@ -4810,9 +6434,41 @@ socecStatus =
     attribute type {
       xsd:token { pattern = "[^\p{C}\p{Z}]+" }
     }?,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-socecStatus-calendar-calendar-check-socecStatus-constraint-rule-68"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     
     ## identifie le système de classification ou la taxinomie utilisés.
-    attribute scheme { xsd:anyURI }?,
+    attribute scheme {
+      xsd:anyURI { pattern = "\S+" }
+    }?,
     [
       a:documentation [
         "contient un code de statut existant dans le système de classification ou dans la taxonomie déclarés au moyen de l'attribut "
@@ -4820,7 +6476,9 @@ socecStatus =
         "."
       ]
     ]
-    attribute code { xsd:anyURI }?,
+    attribute code {
+      xsd:anyURI { pattern = "\S+" }
+    }?,
     empty
   }
 state =
@@ -4838,6 +6496,36 @@ state =
     att.typed.attributes,
     att.naming.attributes,
     att.dimensions.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-state-calendar-calendar-check-state-constraint-rule-69"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 terrain =
@@ -4853,6 +6541,36 @@ terrain =
     att.editLike.attributes,
     att.naming.attributes,
     att.typed.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-terrain-calendar-calendar-check-terrain-constraint-rule-70"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 trait =
@@ -4870,11 +6588,41 @@ trait =
     att.naming.attributes,
     att.typed.attributes,
     att.dimensions.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-trait-calendar-calendar-check-trait-constraint-rule-71"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 objectName =
   
-  ## (name of an object) contains a proper noun or noun phrase used to refer to an object. [13.2.4. Object Names]
+  ## (name of an object) contains a proper noun or noun phrase used to refer to an object. [13.2.5. Object Names]
   element objectName {
     macro.phraseSeq,
     att.datable.attributes,
@@ -4882,15 +6630,45 @@ objectName =
     att.global.attributes,
     att.personal.attributes,
     att.typed.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-objectName-calendar-calendar-check-objectName-constraint-rule-72"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 object =
   
-  ## contains a description of a single identifiable physical object. [13.3.5. Objects]
+  ## contains a description of a single identifiable physical object. [13.3.6. Objects]
   element object {
     (objectIdentifier+,
      model.headLike*,
-     (model.pLike* | (msContents?, physDesc?, history?, additional?)),
+     (model.pLike+ | (msContents | physDesc | history | additional)*),
      (model.noteLike | model.biblLike | linkGrp | link)*,
      object*),
     att.global.attributes,
@@ -4903,7 +6681,7 @@ object =
   }
 listObject =
   
-  ## (list of objects) contains a list of descriptions, each of which provides information about an identifiable physical object. [13.3.5. Objects]
+  ## (list of objects) contains a list of descriptions, each of which provides information about an identifiable physical object. [13.3.6. Objects]
   element listObject {
     (model.headLike*,
      desc*,
@@ -4917,42 +6695,23 @@ listObject =
   }
 objectIdentifier =
   
-  ## (object identifier) groups one or more identifiers or pieces of locating information concerning a single object. [13.3.5. Objects]
+  ## (object identifier) groups one or more identifiers or pieces of locating information concerning a single object. [13.3.6. Objects]
   element objectIdentifier {
-    ((model.placeNamePart
-      | institution
-      | repository
-      | collection
-      | idno
-      | msName
-      | objectName
-      | altIdentifier
-      | address)*)
-    >> sch:pattern [
-         id =
-           "test21-objectIdentifier-objectIdentifier_minimal-constraint-report-15"
-         "\x{a}" ~
-         "            "
-         sch:rule [
-           context = "tei:objectIdentifier"
-           "\x{a}" ~
-           "               "
-           sch:report [
-             test = "not(count(*) gt 0)"
-             "An objectIdentifier must contain at minimum a single piece of locating or identifying information."
-           ]
-           "\x{a}" ~
-           "            "
-         ]
-         "\x{a}" ~
-         "         "
-       ],
+    (model.placeNamePart
+     | institution
+     | repository
+     | collection
+     | idno
+     | msName
+     | objectName
+     | altIdentifier
+     | address)+,
     att.global.attributes,
     empty
   }
 nym =
   
-  ## (nom canonique) contient la définition de tout nom ou partie de nom dans leur forme canonique. [13.3.6. Names and Nyms]
+  ## (nom canonique) contient la définition de tout nom ou partie de nom dans leur forme canonique. [13.3.7. Names and Nyms]
   element nym {
     (idno*, model.entryPart*, model.pLike*, nym*),
     att.global.attributes,
@@ -4961,13 +6720,15 @@ nym =
     
     ## pointe vers des éléments constituants canoniques.
     attribute parts {
-      list { xsd:anyURI+ }
+      list {
+        xsd:anyURI { pattern = "\S+" }+
+      }
     }?,
     empty
   }
 listNym =
   
-  ## (liste de noms canoniques) contient une liste de noms normalisés pour tous types d'objets. [13.3.6. Names and Nyms]
+  ## (liste de noms canoniques) contient une liste de noms normalisés pour tous types d'objets. [13.3.7. Names and Nyms]
   element listNym {
     (model.headLike*,
      desc*,
@@ -5036,6 +6797,36 @@ sponsor =
     att.global.attributes,
     att.canonical.attributes,
     att.datable.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-sponsor-calendar-calendar-check-sponsor-constraint-rule-73"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 funder =
@@ -5046,6 +6837,36 @@ funder =
     att.global.attributes,
     att.canonical.attributes,
     att.datable.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-funder-calendar-calendar-check-funder-constraint-rule-74"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 principal =
@@ -5056,6 +6877,36 @@ principal =
     att.global.attributes,
     att.canonical.attributes,
     att.datable.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-principal-calendar-calendar-check-principal-constraint-rule-75"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 editionStmt =
@@ -5155,6 +7006,36 @@ idno =
         "OCLC"
       | xsd:token { pattern = "[^\p{C}\p{Z}]+" }
     }?,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-idno-calendar-calendar-check-idno-constraint-rule-76"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 availability =
@@ -5168,10 +7049,10 @@ availability =
     ## (status) donne un code caractérisant la disponibilité actuelle d’un texte.
     attribute status {
       
-      ## (free) Le texte est libre de droits.
+      ## (free) le texte est libre de droits.
       "free"
       | 
-        ## (unknown) Le statut du texte est inconnu.
+        ## (unknown) le statut du texte est inconnu.
         "unknown"
       | 
         ## (restricted) le texte est sous droits.
@@ -5187,6 +7068,36 @@ licence =
     att.global.attributes,
     att.pointing.attributes,
     att.datable.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-licence-calendar-calendar-check-licence-constraint-rule-77"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 seriesStmt =
@@ -5343,7 +7254,7 @@ quotation =
   element quotation {
     (model.pLike*)
     >> sch:pattern [
-         id = "test21-quotation-quotationContents-constraint-report-16"
+         id = "test21-quotation-quotationContents-constraint-rule-78"
          "\x{a}" ~
          "            "
          sch:rule [
@@ -5351,11 +7262,12 @@ quotation =
            "\x{a}" ~
            "               "
            sch:report [
-             test = "not(@marks) and not (tei:p)"
+             test = "not( @marks )  and  not( tei:p )"
              "\x{a}" ~
-             "On "
+             "          On "
              sch:name [ ]
-             ", either the @marks attribute should be used, or a paragraph of description provided"
+             ", either the @marks attribute should be used, or a paragraph of description provided\x{a}" ~
+             "        "
            ]
            "\x{a}" ~
            "            "
@@ -5487,6 +7399,7 @@ tagUsage =
   element tagUsage {
     macro.limitedContent,
     att.global.attributes,
+    att.datcat.attributes,
     
     ## (nom de l'élément) nom (identifiant générique) de l’élément indiqué par la balise.
     attribute gi { xsd:Name },
@@ -5511,7 +7424,9 @@ tagUsage =
     att.global.attributes,
     
     ## le nom formel complet de l'espace de noms concerné.
-    attribute name { xsd:anyURI },
+    attribute name {
+      xsd:anyURI { pattern = "\S+" }?
+    },
     empty
   }
 rendition =
@@ -5563,34 +7478,11 @@ citeStructure =
     (citeData*, citeStructure*, model.descLike*),
     att.global.attributes,
     att.citeStructurePart.attributes,
-    (
-     ## (delimiter) supplies a delimiting string preceding the structural component.
-     attribute delim {
-       xsd:string { pattern = ".+" }
-     }?)
-    >> sch:pattern [
-         id =
-           "test21-citeStructure-delim-citestructure-inner-delim-constraint-rule-12"
-         "\x{a}" ~
-         "            "
-         sch:rule [
-           context = "tei:citeStructure[parent::tei:citeStructure]"
-           "\x{a}" ~
-           "               "
-           sch:assert [
-             test = "@delim"
-             "A "
-             sch:name [ ]
-             " with a parent "
-             sch:name [ ]
-             " must have a @delim attribute."
-           ]
-           "\x{a}" ~
-           "            "
-         ]
-         "\x{a}" ~
-         "         "
-       ],
+    
+    ## (delimiter) supplies a delimiting string preceding the structural component.
+    attribute delim {
+      xsd:string { pattern = ".+" }
+    }?,
     [
       a:documentation [
         "(match) supplies an XPath selection pattern using the syntax defined in  which identifies a set of nodes which are citable structural components. The expression may be absolute (beginning with `/`) or relative. "
@@ -5609,7 +7501,7 @@ citeStructure =
     attribute match { text }
     >> sch:pattern [
          id =
-           "test21-citeStructure-match-citestructure-outer-match-constraint-rule-13"
+           "test21-citeStructure-match-citestructure-outer-match-constraint-rule-79"
          "\x{a}" ~
          "            "
          sch:rule [
@@ -5630,7 +7522,7 @@ citeStructure =
        ]
     >> sch:pattern [
          id =
-           "test21-citeStructure-match-citestructure-inner-match-constraint-rule-14"
+           "test21-citeStructure-match-citestructure-inner-match-constraint-rule-80"
          "\x{a}" ~
          "            "
          sch:rule [
@@ -5671,7 +7563,9 @@ citeData =
     att.citeStructurePart.attributes,
     
     ## (property) A URI indicating a property definition.
-    attribute property { xsd:anyURI },
+    attribute property {
+      xsd:anyURI { pattern = "\S+" }
+    },
     empty
   }
 cRefPattern =
@@ -5717,7 +7611,7 @@ refState =
     ## spécifie la longueur fixe du composant de la référence.
     attribute length { xsd:nonNegativeInteger }?,
     
-    ## (délimiteur) Fournit une suite de caractères de délimitation après le composant de référence.
+    ## (délimiteur) fournit une suite de caractères de délimitation après le composant de référence.
     attribute delim { xsd:string }?,
     empty
   }
@@ -5733,6 +7627,7 @@ taxonomy =
       | ((model.descLike | gloss)+, (category | taxonomy)*))
      | (model.biblLike, (category | taxonomy)*)),
     att.global.attributes,
+    att.datcat.attributes,
     empty
   }
 category =
@@ -5742,6 +7637,7 @@ category =
     ((catDesc+ | (model.descLike | gloss)*),
      category*),
     att.global.attributes,
+    att.datcat.attributes,
     empty
   }
 catDesc =
@@ -5780,13 +7676,13 @@ geoDecl =
       "WGS84"
       | 
         ## (Système de Référence du Réseau Militaire,
-        ##             (MGRS).) Les valeurs fournies sont des codes objet d'entités geospatiales, fondées sur les coordonnées de la grille de projection transversale universelle de Mercator, (UTM).
+        ##             (MGRS).) les valeurs fournies sont des codes objet d'entités geospatiales, fondées sur les coordonnées de la grille de projection transversale universelle de Mercator, (UTM).
         "MGRS"
       | 
         ## (Système de coordonnées de Grande-Bretagne (OSGB) ) la valeur fournie est à interpréter selon le système "British national grid reference".
         "OSGB36"
       | 
-        ## (système de coordonnées de données européen.) La valeur fournie doit être interprétée comme la latitude suivie de la longitude selon le système de coordonnées de données européen.
+        ## (système de coordonnées de données européen.) la valeur fournie doit être interprétée comme la latitude suivie de la longitude selon le système de coordonnées de données européen.
         "ED50"
       | xsd:token { pattern = "[^\p{C}\p{Z}]+" }
     }?,
@@ -5800,6 +7696,36 @@ unitDecl =
     att.canonical.attributes,
     att.datable.attributes,
     att.global.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-unitDecl-calendar-calendar-check-unitDecl-constraint-rule-81"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 unitDef =
@@ -5811,6 +7737,36 @@ unitDef =
     att.datable.attributes,
     att.canonical.attributes,
     att.typed.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-unitDef-calendar-calendar-check-unitDef-constraint-rule-82"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 conversion =
@@ -5822,6 +7778,36 @@ conversion =
     att.datable.attributes,
     att.formula.attributes,
     att.locatable.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-conversion-calendar-calendar-check-conversion-constraint-rule-83"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     [
       a:documentation [
         "indicates a source unit of measure that is to be converted into another unit indicated in "
@@ -5829,7 +7815,9 @@ conversion =
         "."
       ]
     ]
-    attribute fromUnit { xsd:anyURI },
+    attribute fromUnit {
+      xsd:anyURI { pattern = "\S+" }
+    },
     [
       a:documentation [
         "the target unit of measurement for a conversion from a source unit referenced in "
@@ -5837,7 +7825,9 @@ conversion =
         "."
       ]
     ]
-    attribute toUnit { xsd:anyURI },
+    attribute toUnit {
+      xsd:anyURI { pattern = "\S+" }
+    },
     empty
   }
 appInfo =
@@ -5854,6 +7844,36 @@ application =
     att.global.attributes,
     att.typed.attributes,
     att.datable.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-application-calendar-calendar-check-application-constraint-rule-84"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     
     ## fournit un identifiant pour l'application, indépendamment de son numéro de version ou du nom affiché.
     attribute ident { xsd:Name },
@@ -5885,7 +7905,9 @@ abstract =
   
   ## contains a summary or formal abstract prefixed to an existing source document by the encoder. [2.4.4. Abstracts]
   element abstract {
-    (model.pLike | model.listLike)+, att.global.attributes, empty
+    (model.pLike | model.listLike | listBibl)+,
+    att.global.attributes,
+    empty
   }
 creation =
   
@@ -5894,6 +7916,36 @@ creation =
     (text | model.limitedPhrase | listChange)*,
     att.global.attributes,
     att.datable.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-creation-calendar-calendar-check-creation-constraint-rule-85"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 langUsage =
@@ -5948,7 +8000,9 @@ keywords =
     att.global.attributes,
     
     ## désigne la liste close de mots dans lequel l'ensemble des mots-clés concernés est défini.
-    attribute scheme { xsd:anyURI }?,
+    attribute scheme {
+      xsd:anyURI { pattern = "\S+" }
+    }?,
     empty
   }
 classCode =
@@ -5959,7 +8013,9 @@ classCode =
     att.global.attributes,
     
     ## identifie le système de classification ou la taxinomie utilisée.
-    attribute scheme { xsd:anyURI },
+    attribute scheme {
+      xsd:anyURI { pattern = "\S+" }
+    },
     empty
   }
 catRef =
@@ -5971,7 +8027,9 @@ catRef =
     att.pointing.attributes,
     
     ## identifie le schéma de classification dans lequel est défini le jeu de catégories concerné.
-    attribute scheme { xsd:anyURI }?,
+    attribute scheme {
+      xsd:anyURI { pattern = "\S+" }
+    }?,
     empty
   }
 calendarDesc =
@@ -5982,12 +8040,15 @@ calendar =
   
   ## (calendrier) describes a calendar or dating system used in a dating formula in the text. [2.4.5. Calendar Description]
   element calendar {
-    model.pLike+, att.global.attributes, att.pointing.attributes, empty
+    model.pLike+,
+    att.global.attributes,
+    att.pointing.attributes,
+    att.typed.attributes,
+    empty
   }
 correspDesc =
   
-  ## (correspondence
-  ##     description) contains a description of the actions related to one act of correspondence. [2.4.6. Correspondence Description]
+  ## (correspondence description) contains a description of the actions related to one act of correspondence. [2.4.6. Correspondence Description]
   element correspDesc {
     (model.correspDescPart+ | model.pLike+),
     att.declarable.attributes,
@@ -6037,7 +8098,7 @@ xenoData =
   
   ## (non-TEI metadata) provides a container element into which metadata in non-TEI formats may be placed. [2.5. Non-TEI Metadata]
   element xenoData {
-    (text | anyElement-xenoData),
+    (text | anyElement_xenoData_1),
     att.global.attributes,
     att.declarable.attributes,
     att.typed.attributes,
@@ -6047,7 +8108,7 @@ revisionDesc =
   
   ## (descriptif des révisions) fournit un résumé de l’historique des révisions d’un fichier. [2.6. The Revision Description 2.1.1. The TEI Header and Its Components]
   element revisionDesc {
-    (\list | listChange | change+),
+    (\list+ | listChange+ | change+),
     att.global.attributes,
     att.docStatus.attributes,
     empty
@@ -6062,10 +8123,42 @@ change =
     att.docStatus.attributes,
     att.global.attributes,
     att.typed.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-change-calendar-calendar-check-change-constraint-rule-86"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     
     ## (target) points to one or more elements that belong to this change.
     attribute target {
-      list { xsd:anyURI+ }
+      list {
+        xsd:anyURI { pattern = "\S+" }+
+      }
     }?,
     empty
   }
@@ -6110,41 +8203,57 @@ att.global.linking.attribute.corresp =
   
   ## (correspond) pointe vers des éléments qui ont une correspondance avec l'élément en question.
   attribute corresp {
-    list { xsd:anyURI+ }
+    list {
+      xsd:anyURI { pattern = "\S+" }+
+    }
   }?
 att.global.linking.attribute.synch =
   
   ## (synchrone) pointe vers des éléments qui sont synchrones avec l'élément en question.
   attribute synch {
-    list { xsd:anyURI+ }
+    list {
+      xsd:anyURI { pattern = "\S+" }+
+    }
   }?
 att.global.linking.attribute.sameAs =
   
   ## pointe vers un élément identique à l'élément en question.
-  attribute sameAs { xsd:anyURI }?
+  attribute sameAs {
+    xsd:anyURI { pattern = "\S+" }
+  }?
 att.global.linking.attribute.copyOf =
   
   ## pointe vers un élément dont l'élément en question est une copie.
-  attribute copyOf { xsd:anyURI }?
+  attribute copyOf {
+    xsd:anyURI { pattern = "\S+" }
+  }?
 att.global.linking.attribute.next =
   
   ## pointe vers l'élément suivant d'un ensemble virtuel dont l'élément en question est une partie.
-  attribute next { xsd:anyURI }?
+  attribute next {
+    xsd:anyURI { pattern = "\S+" }
+  }?
 att.global.linking.attribute.prev =
   
   ## ( précédent) pointe vers l'élément précédent d'un ensemble virtuel auquel appartient l'élément en question.
-  attribute prev { xsd:anyURI }?
+  attribute prev {
+    xsd:anyURI { pattern = "\S+" }
+  }?
 att.global.linking.attribute.exclude =
   
   ## pointe vers des éléments qui sont une alternative exclusive à l'élément en question.
   attribute exclude {
-    list { xsd:anyURI+ }
+    list {
+      xsd:anyURI { pattern = "\S+" }+
+    }
   }?
 att.global.linking.attribute.select =
   
   ## sélectionne une ou plusieurs valeurs alternatives ; si une seule valeur est sélectionnée, l'ambiguïté ou l'incertitude est marquée comme résolue. Si plus d'une valeur alternative est sélectionnée, le degré d'ambiguïté ou d'incertitude est marqué comme réduit par le nombre de valeurs alternatives non sélectionnées.
   attribute select {
-    list { xsd:anyURI+ }
+    list {
+      xsd:anyURI { pattern = "\S+" }+
+    }
   }?
 link =
   
@@ -6152,7 +8261,7 @@ link =
   element link {
     empty
     >> sch:pattern [
-         id = "test21-link-linkTargets3-constraint-assert-16"
+         id = "test21-link-linkTargets3-constraint-rule-87"
          "\x{a}" ~
          "            "
          sch:rule [
@@ -6190,10 +8299,10 @@ ab =
   
   ## (bloc anonyme) contient une unité de texte quelconque, de niveau "composant", faisant office de contenant anonyme pour une expression ou des éléments de niveau intermédiaire, analogue à un paragraphe mais sans sa portée sémantique. [16.3. Blocks, Segments, and Anchors]
   element ab {
-    macro.paraContent
+    macro.abContent
     >> sch:pattern [
          id =
-           "test21-ab-abstractModel-structure-ab-in-ab-or-p-constraint-report-17"
+           "test21-ab-abstractModel-structure-ab-in-l-or-lg-constraint-rule-88"
          "\x{a}" ~
          "            "
          sch:rule [
@@ -6202,32 +8311,10 @@ ab =
            "               "
            sch:report [
              test =
-               "    (ancestor::tei:p or ancestor::tei:ab)                          and not( ancestor::tei:floatingText                                  |parent::tei:exemplum                                 |parent::tei:item                                 |parent::tei:note                                 |parent::tei:q                                 |parent::tei:quote                                 |parent::tei:remarks                                 |parent::tei:said                                 |parent::tei:sp                                 |parent::tei:stage                                 |parent::tei:cell                                 |parent::tei:figure                                )"
+               "(ancestor::tei:l or ancestor::tei:lg) and not( ancestor::tei:floatingText |parent::tei:figure |parent::tei:note )"
              "\x{a}" ~
-             "        Abstract model violation: ab may not occur inside paragraphs or other ab elements.\x{a}" ~
-             "      "
-           ]
-           "\x{a}" ~
-           "            "
-         ]
-         "\x{a}" ~
-         "         "
-       ]
-    >> sch:pattern [
-         id =
-           "test21-ab-abstractModel-structure-ab-in-l-or-lg-constraint-report-18"
-         "\x{a}" ~
-         "            "
-         sch:rule [
-           context = "tei:ab"
-           "\x{a}" ~
-           "               "
-           sch:report [
-             test =
-               "    (ancestor::tei:l or ancestor::tei:lg)                         and not( ancestor::tei:floatingText                                 |parent::tei:figure                                 |parent::tei:note                                )"
-             "\x{a}" ~
-             "        Abstract model violation: Lines may not contain higher-level divisions such as p or ab, unless ab is a child of figure or note, or is a descendant of floatingText.\x{a}" ~
-             "      "
+             "          Abstract model violation: Lines may not contain higher-level divisions such as p or ab, unless ab is a child of figure or note, or is a descendant of floatingText.\x{a}" ~
+             "        "
            ]
            "\x{a}" ~
            "            "
@@ -6353,7 +8440,9 @@ when =
         " : cette date ou cette heure s'obtiennent en ajoutant la valeur de l'intervalle à la date du point de référence."
       ]
     ]
-    attribute since { xsd:anyURI }?,
+    attribute since {
+      xsd:anyURI { pattern = "\S+" }
+    }?,
     empty
   }
 timeline =
@@ -6364,7 +8453,9 @@ timeline =
     att.global.attributes,
     
     ## désigne le début de la frise chronologique, c'est-à-dire le moment où elle commence.
-    attribute origin { xsd:anyURI }?,
+    attribute origin {
+      xsd:anyURI { pattern = "\S+" }
+    }?,
     [
       a:documentation [
         "spécifie l'unité de temps correspondant à la valeur de l'attribut "
@@ -6413,7 +8504,7 @@ join =
   element join {
     ((model.descLike | model.certLike)*)
     >> sch:pattern [
-         id = "test21-join-joinTargets3-constraint-assert-17"
+         id = "test21-join-joinTargets3-constraint-rule-89"
          "\x{a}" ~
          "            "
          sch:rule [
@@ -6421,9 +8512,9 @@ join =
            "\x{a}" ~
            "               "
            sch:assert [
-             test = "contains(@target,' ')"
+             test = "contains( normalize-space( @target ),' ')"
              "\x{a}" ~
-             "You must supply at least two values for @target on "
+             "          You must supply at least two values for @target on "
              sch:name [ ]
              "\x{a}" ~
              "               "
@@ -6497,7 +8588,11 @@ alt =
     
     ## précise la cible de la référence en donnant une ou plusieurs références URI
     attribute target {
-      list { xsd:anyURI, xsd:anyURI, xsd:anyURI* }
+      list {
+        xsd:anyURI { pattern = "\S+" },
+        xsd:anyURI { pattern = "\S+" },
+        xsd:anyURI { pattern = "\S+" }*
+      }
     }?,
     
     ## établit si les alternatives rassemblées dans cette collection sont exclusives ou non.
@@ -6506,12 +8601,12 @@ alt =
       ## (exclusif) indique que l'alternative est exclusive, c'est-à-dire, qu'une seule des options proposées est possible.
       "excl"
       | 
-        ## (non exclusif) Indique que cette alternative n'est pas exclusive, c'est-à-dire qu'une option au moins est vraie.
+        ## (non exclusif) indique que cette alternative n'est pas exclusive, c'est-à-dire qu'une option au moins est vraie.
         "incl"
     }?,
     [
       a:documentation [
-        "Si l'attribut "
+        "si l'attribut "
         ns1:code [ "@mode" ]
         " a la valeur `excl`, chacune des valeurs de l'attribut "
         ns1:code [ "@weights" ]
@@ -6523,7 +8618,11 @@ alt =
       ]
     ]
     attribute weights {
-      list { xsd:double, xsd:double, xsd:double* }
+      list {
+        xsd:double { minInclusive = "0" maxInclusive = "1" },
+        xsd:double { minInclusive = "0" maxInclusive = "1" },
+        xsd:double { minInclusive = "0" maxInclusive = "1" }*
+      }
     }?,
     empty
   }
@@ -6559,7 +8658,7 @@ standOff =
     (model.standOffPart+)
     >> sch:pattern [
          id =
-           "test21-standOff-nested_standOff_should_be_typed-constraint-assert-18"
+           "test21-standOff-nested_standOff_should_be_typed-constraint-rule-90"
          "\x{a}" ~
          "            "
          sch:rule [
@@ -6569,10 +8668,10 @@ standOff =
            sch:assert [
              test = "@type or not(ancestor::tei:standOff)"
              "This\x{a}" ~
-             "      "
+             "        "
              sch:name [ ]
              " element must have a @type attribute, since it is\x{a}" ~
-             "      nested inside a "
+             "        nested inside a "
              sch:name [ ]
              "\x{a}" ~
              "               "
@@ -6653,7 +8752,9 @@ annotation =
     
     ## précise la cible de la référence en donnant une ou plusieurs références URI
     attribute target {
-      list { xsd:anyURI+ }
+      list {
+        xsd:anyURI { pattern = "\S+" }+
+      }
     },
     
     ##
@@ -6720,7 +8821,9 @@ att.msClass.attribute.class =
   
   ## spécifie la ou les catégories ou classes auxquelles l'item appartient.
   attribute class {
-    list { xsd:anyURI+ }
+    list {
+      xsd:anyURI { pattern = "\S+" }+
+    }
   }?
 msDesc =
   
@@ -6729,11 +8832,41 @@ msDesc =
     (msIdentifier,
      model.headLike*,
      (model.pLike+
-      | (msContents?,
-         physDesc?,
-         history?,
-         additional?,
-         (msPart* | msFrag*)))),
+      | (msContents
+         | physDesc
+         | history
+         | additional
+         | msPart
+         | msFrag)*))
+    >> sch:pattern [
+         id = "test21-msDesc-one_ms_singleton_max-constraint-rule-91"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context =
+             "tei:msContents|tei:physDesc|tei:history|tei:additional"
+           "\x{a}" ~
+           "               "
+           sch:let [ name = "gi" value = "name(.)" ]
+           "\x{a}" ~
+           "               "
+           sch:report [
+             test =
+               "preceding-sibling::*[ name(.) eq $gi ]                           and                           not( following-sibling::*[ name(.) eq $gi ] )"
+             "\x{a}" ~
+             "          Only one "
+             sch:name [ ]
+             " is allowed as a child of "
+             sch:value-of [ select = "name(..)" ]
+             ".\x{a}" ~
+             "        "
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     att.global.attributes,
     att.sortable.attributes,
     att.typed.attributes,
@@ -6747,8 +8880,7 @@ catchwords =
   element catchwords {
     macro.phraseSeq
     >> sch:pattern [
-         id =
-           "test21-catchwords-catchword_in_msDesc-constraint-assert-19"
+         id = "test21-catchwords-catchword_in_msDesc-constraint-rule-92"
          "\x{a}" ~
          "            "
          sch:rule [
@@ -6776,7 +8908,7 @@ dimensions =
   element dimensions {
     ((dim | model.dimLike)*)
     >> sch:pattern [
-         id = "test21-dimensions-duplicateDim-constraint-report-19"
+         id = "test21-dimensions-duplicateDim-constraint-rule-93"
          "\x{a}" ~
          "            "
          sch:rule [
@@ -6784,32 +8916,32 @@ dimensions =
            "\x{a}" ~
            "               "
            sch:report [
-             test = "count(tei:width)> 1"
+             test = "count(tei:width) gt 1"
              "\x{a}" ~
-             "The element "
+             "          The element "
              sch:name [ ]
              " may appear once only\x{a}" ~
-             "      "
+             "        "
            ]
            "\x{a}" ~
            "               "
            sch:report [
-             test = "count(tei:height)> 1"
+             test = "count(tei:height) gt 1"
              "\x{a}" ~
-             "The element "
+             "          The element "
              sch:name [ ]
              " may appear once only\x{a}" ~
-             "      "
+             "        "
            ]
            "\x{a}" ~
            "               "
            sch:report [
-             test = "count(tei:depth)> 1"
+             test = "count(tei:depth) gt 1"
              "\x{a}" ~
-             "The element "
+             "          The element "
              sch:name [ ]
              " may appear once only\x{a}" ~
-             "      "
+             "        "
            ]
            "\x{a}" ~
            "            "
@@ -6870,14 +9002,16 @@ locus =
     att.typed.attributes,
     
     ## (système) désigne le système de foliotation utilisé pour localiser la subdivision du manuscrit qui est en cours de description.
-    attribute scheme { xsd:anyURI }?,
+    attribute scheme {
+      xsd:anyURI { pattern = "\S+" }
+    }?,
     
-    ## (depuis) Spécifie, sous une forme normalisée, le point de départ de la localisation.
+    ## (depuis) spécifie, sous une forme normalisée, le point de départ de la localisation.
     attribute from {
       xsd:token { pattern = "[^\p{C}\p{Z}]+" }
     }?,
     
-    ## (jusqu'à) Spécifie, sous une forme normalisée, la borne de fin pour la localisation.
+    ## (jusqu'à) spécifie, sous une forme normalisée, la borne de fin pour la localisation.
     attribute to {
       xsd:token { pattern = "[^\p{C}\p{Z}]+" }
     }?,
@@ -6891,12 +9025,14 @@ locusGrp =
     att.global.attributes,
     
     ## (système) désigne le système de foliotation selon lequel les emplacements contenus dans le groupe sont définis.
-    attribute scheme { xsd:anyURI }?,
+    attribute scheme {
+      xsd:anyURI { pattern = "\S+" }
+    }?,
     empty
   }
 material =
   
-  ## (matériau) Contient un mot ou une expression décrivant le ou les matériau(x) utilisé(s) pour fabriquer un manuscrit (ou une partie d'un manuscrit). [10.3.2. Material and Object Type]
+  ## (matériau) contient un mot ou une expression décrivant le ou les matériau(x) utilisé(s) pour fabriquer un manuscrit (ou une partie d'un manuscrit). [10.3.2. Material and Object Type]
   element material {
     macro.phraseSeq,
     att.global.attributes,
@@ -6911,7 +9047,9 @@ material =
     
     ## identifies one or more elements to which the metamark applies.
     attribute target {
-      list { xsd:anyURI+ }
+      list {
+        xsd:anyURI { pattern = "\S+" }+
+      }
     }?,
     empty
   }
@@ -6926,11 +9064,12 @@ objectType =
   }
 origDate =
   
-  ## (date de la création) Contient une date, dans une forme libre, utilisée pour dater la création d'un manuscrit ou d'une partie d'un manuscrit. [10.3.1. Origination]
+  ## (date de la création) contient une date, dans une forme libre, utilisée pour dater la création d'un manuscrit ou d'une partie d'un manuscrit. [10.3.1. Origination]
   element origDate {
     (text | model.gLike | model.phrase | model.global)*,
     att.global.attributes,
     att.datable.attributes,
+    att.calendarSystem.attributes,
     att.dimensions.attributes,
     att.editLike.attributes,
     att.typed.attributes,
@@ -6938,7 +9077,7 @@ origDate =
   }
 origPlace =
   
-  ## (lieu de création) Contient un nom de lieu, dans une forme libre, utilisé pour désigner l'endroit où a été produit un manuscrit ou une partie d'un manuscrit. [10.3.1. Origination]
+  ## (lieu de création) contient un nom de lieu, dans une forme libre, utilisé pour désigner l'endroit où a été produit un manuscrit ou une partie d'un manuscrit. [10.3.1. Origination]
   element origPlace {
     macro.phraseSeq,
     att.global.attributes,
@@ -6946,15 +9085,45 @@ origPlace =
     att.datable.attributes,
     att.editLike.attributes,
     att.typed.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-origPlace-calendar-calendar-check-origPlace-constraint-rule-94"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 secFol =
   
-  ## (deuxième folio) Le mot ou les mots repris d'un point précisément connu d'un codex (comme le début du second feuillet) pour identifier celui-ci de façon univoque. [10.3.7. Catchwords, Signatures, Secundo Folio]
+  ## (deuxième folio) le mot ou les mots repris d'un point précisément connu d'un codex (comme le début du second feuillet) pour identifier celui-ci de façon univoque. [10.3.7. Catchwords, Signatures, Secundo Folio]
   element secFol {
     macro.phraseSeq
     >> sch:pattern [
-         id = "test21-secFol-secFol_in_msDesc-constraint-assert-20"
+         id = "test21-secFol-secFol_in_msDesc-constraint-rule-95"
          "\x{a}" ~
          "            "
          sch:rule [
@@ -6978,12 +9147,12 @@ secFol =
   }
 signatures =
   
-  ## (signatures) Contient une étude des signatures trouvées sur un feuillet ou sur un cahier dans un manuscrit. [10.3.7. Catchwords, Signatures, Secundo Folio]
+  ## (signatures) contient une étude des signatures trouvées sur un feuillet ou sur un cahier dans un manuscrit. [10.3.7. Catchwords, Signatures, Secundo Folio]
   element signatures {
     macro.specialPara
     >> sch:pattern [
          id =
-           "test21-signatures-signatures_in_msDesc-constraint-assert-21"
+           "test21-signatures-signatures_in_msDesc-constraint-rule-96"
          "\x{a}" ~
          "            "
          sch:rule [
@@ -7007,21 +9176,51 @@ signatures =
   }
 stamp =
   
-  ## (cachet) Contient un mot ou une expression décrivant un cachet ou une marque du même genre. [10.3.3. Watermarks and Stamps]
+  ## (cachet) contient un mot ou une expression décrivant un cachet ou une marque du même genre. [10.3.3. Watermarks and Stamps]
   element stamp {
     macro.phraseSeq,
     att.global.attributes,
     att.typed.attributes,
     att.datable.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-stamp-calendar-calendar-check-stamp-constraint-rule-97"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 watermark =
   
-  ## (filigrane) Contient un mot ou une expression décrivant un filigrane ou une marque du même genre. [10.3.3. Watermarks and Stamps]
+  ## (filigrane) contient un mot ou une expression décrivant un filigrane ou une marque du même genre. [10.3.3. Watermarks and Stamps]
   element watermark { macro.phraseSeq, att.global.attributes, empty }
 msIdentifier =
   
-  ## (identifiant du manuscrit) Contient les informations requises pour identifier le manuscrit en cours de description. [10.4. The Manuscript Identifier]
+  ## (identifiant du manuscrit) contient les informations requises pour identifier le manuscrit en cours de description. [10.4. The Manuscript Identifier]
   element msIdentifier {
     ((placeName?,
       bloc?,
@@ -7036,7 +9235,7 @@ msIdentifier =
       idno*),
      (msName | objectName | altIdentifier)*)
     >> sch:pattern [
-         id = "test21-msIdentifier-msId_minimal-constraint-report-22"
+         id = "test21-msIdentifier-msId_minimal-constraint-rule-98"
          "\x{a}" ~
          "            "
          sch:rule [
@@ -7045,7 +9244,7 @@ msIdentifier =
            "               "
            sch:report [
              test =
-               "not(parent::tei:msPart) and (local-name(*[1])='idno' or local-name(*[1])='altIdentifier' or normalize-space(.)='')"
+               "not( parent::tei:msPart )                           and                           ( child::*[1]/self::idno  or  child::*[1]/self::altIdentifier  or  normalize-space(.) eq '')"
              "An msIdentifier must contain either a repository or location."
            ]
            "\x{a}" ~
@@ -7059,7 +9258,7 @@ msIdentifier =
   }
 institution =
   
-  ## (institution) Contient le nom d'un organisme (comme une université ou une bibliothèque), avec lequel un manuscrit est identifié ; en général c'est le nom de l'institution qui conserve ce manuscrit. [10.4. The Manuscript Identifier]
+  ## (institution) contient le nom d'un organisme (comme une université ou une bibliothèque), avec lequel un manuscrit est identifié ; en général c'est le nom de l'institution qui conserve ce manuscrit. [10.4. The Manuscript Identifier]
   element institution {
     macro.phraseSeq.limited,
     att.global.attributes,
@@ -7068,7 +9267,7 @@ institution =
   }
 repository =
   
-  ## (lieu de conservation) Contient le nom d'un dépôt dans lequel des manuscrits sont entreposés, et qui peut faire partie d'une institution. [10.4. The Manuscript Identifier]
+  ## (lieu de conservation) contient le nom d'un dépôt dans lequel des manuscrits sont entreposés, et qui peut faire partie d'une institution. [10.4. The Manuscript Identifier]
   element repository {
     macro.phraseSeq.limited,
     att.global.attributes,
@@ -7077,7 +9276,7 @@ repository =
   }
 collection =
   
-  ## (collection) Contient le nom d'une collection de manuscrits, ceux-ci ne se trouvant pas nécessairement dans le même lieu de conservation. [10.4. The Manuscript Identifier]
+  ## (collection) contient le nom d'une collection de manuscrits, ceux-ci ne se trouvant pas nécessairement dans le même lieu de conservation. [10.4. The Manuscript Identifier]
   element collection {
     macro.phraseSeq.limited,
     att.global.attributes,
@@ -7087,7 +9286,7 @@ collection =
   }
 altIdentifier =
   
-  ## (autre identifiant) Contient un autre ou un ancien identifiant pour un manuscrit, par exemple un numéro anciennement utilisé dans un catalogue. [10.4. The Manuscript Identifier]
+  ## (autre identifiant) contient un autre ou un ancien identifiant pour un manuscrit, par exemple un numéro anciennement utilisé dans un catalogue. [10.4. The Manuscript Identifier]
   element altIdentifier {
     (placeName?,
      bloc?,
@@ -7104,6 +9303,36 @@ altIdentifier =
     att.global.attributes,
     att.typed.attributes,
     att.datable.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-altIdentifier-calendar-calendar-check-altIdentifier-constraint-rule-99"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 msName =
@@ -7145,7 +9374,7 @@ filiation =
   }
 finalRubric =
   
-  ## (rubrique de fin) Contient les derniers mots d'une section de texte, qui incluent souvent la mention de son auteur et de son titre, et sont généralement différenciés du texte lui-même par l'utilisation d'une encre rouge, par une taille ou un style d'écriture particuliers, ou par tout autre moyen visuel. [10.6.1. The msItem and msItemStruct Elements]
+  ## (rubrique de fin) contient les derniers mots d'une section de texte, qui incluent souvent la mention de son auteur et de son titre, et sont généralement différenciés du texte lui-même par l'utilisation d'une encre rouge, par une taille ou un style d'écriture particuliers, ou par tout autre moyen visuel. [10.6.1. The msItem and msItemStruct Elements]
   element finalRubric {
     macro.phraseSeq,
     att.global.attributes,
@@ -7248,7 +9477,7 @@ objectDesc =
   }
 supportDesc =
   
-  ## (description du support) Regroupe les éléments décrivant le support physique du texte du manuscrit. [10.7.1. Object Description]
+  ## (description du support) regroupe les éléments décrivant le support physique du texte du manuscrit. [10.7.1. Object Description]
   element supportDesc {
     (model.pLike+
      | (support?, extent?, foliation*, collation?, condition?)),
@@ -7352,7 +9581,7 @@ typeNote =
   }
 scriptDesc =
   
-  ## contains a description of the scripts used in a manuscript or other object. [10.7.2.1. Writing]
+  ## (script description) contains a description of the scripts used in a manuscript or other object. [10.7.2.1. Writing]
   element scriptDesc {
     (model.pLike+ | (summary?, scriptNote+)),
     att.global.attributes,
@@ -7410,6 +9639,36 @@ binding =
     (model.pLike | condition | decoNote)+,
     att.global.attributes,
     att.datable.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-binding-calendar-calendar-check-binding-constraint-rule-100"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     
     ## (contemporaine) spécifie si la reliure est contemporaine ou non de l'essentiel du contenu du manuscrit.
     attribute contemporary {
@@ -7449,6 +9708,36 @@ seal =
     att.global.attributes,
     att.typed.attributes,
     att.datable.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-seal-calendar-calendar-check-seal-constraint-rule-101"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     
     ## (contemporain) spécifie si le sceau est ou non contemporain du manuscrit auquel il est attaché.
     attribute contemporary {
@@ -7487,6 +9776,36 @@ origin =
     att.global.attributes,
     att.editLike.attributes,
     att.datable.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-origin-calendar-calendar-check-origin-constraint-rule-102"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 provenance =
@@ -7497,6 +9816,36 @@ provenance =
     att.global.attributes,
     att.datable.attributes,
     att.typed.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-provenance-calendar-calendar-check-provenance-constraint-rule-103"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 acquisition =
@@ -7506,13 +9855,45 @@ acquisition =
     macro.specialPara,
     att.global.attributes,
     att.datable.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-acquisition-calendar-calendar-check-acquisition-constraint-rule-104"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 additional =
   
   ## (informations complémentaires) regroupe les informations complémentaires sur le manuscrit, incluant une bibliographie, des indications sur ses reproductions, ou des informations sur sa conservation et sur sa gestion [10.9. Additional Information]
   element additional {
-    (adminInfo?, surrogates?, listBibl?), att.global.attributes, empty
+    ((adminInfo?, surrogates?, listBibl?) | model.pLike+),
+    att.global.attributes,
+    empty
   }
 adminInfo =
   
@@ -7553,6 +9934,36 @@ custEvent =
     att.global.attributes,
     att.datable.attributes,
     att.typed.attributes,
+    (
+     ## indique le système ou le calendrier auquel appartient la date exprimée dans le contenu de l'élément.
+     attribute calendar {
+       list {
+         xsd:anyURI { pattern = "\S+" }+
+       }
+     }?)
+    >> sch:pattern [
+         id =
+           "test21-custEvent-calendar-calendar-check-custEvent-constraint-rule-105"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:*[@calendar]"
+           "\x{a}" ~
+           "               "
+           sch:assert [
+             test = "string-length( normalize-space(.) ) gt 0"
+             " @calendar indicates one or more\x{a}" ~
+             "                        systems or calendars to which the date represented by the content of this element belongs,\x{a}" ~
+             "                        but this "
+             sch:name [ ]
+             " element has no textual content."
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     empty
   }
 surrogates =
@@ -7566,7 +9977,7 @@ msPart =
     (msIdentifier,
      model.headLike*,
      (model.pLike+
-      | (msContents?, physDesc?, history?, additional?, msPart*))),
+      | (msContents | physDesc | history | additional | msPart)*)),
     att.global.attributes,
     att.typed.attributes,
     empty
@@ -7577,7 +9988,7 @@ msFrag =
   element msFrag {
     ((altIdentifier | msIdentifier),
      model.headLike*,
-     (model.pLike+ | (msContents?, physDesc?, history?, additional?))),
+     (model.pLike+ | (msContents | physDesc | history | additional)*)),
     att.global.attributes,
     att.typed.attributes,
     empty
@@ -7587,7 +9998,9 @@ att.global.facs.attribute.facs =
   
   ## (fac-similé) pointe directement vers une image ou vers une partie d'une image correspondant au contenu de l'élément.
   attribute facs {
-    list { xsd:anyURI+ }
+    list {
+      xsd:anyURI { pattern = "\S+" }+
+    }
   }?
 att.global.change.attributes = att.global.change.attribute.change
 att.global.change.attribute.change =
@@ -7599,7 +10012,9 @@ att.global.change.attribute.change =
     ]
   ]
   attribute change {
-    list { xsd:anyURI+ }
+    list {
+      xsd:anyURI { pattern = "\S+" }+
+    }
   }?
 att.coordinated.attributes =
   att.coordinated.attribute.start,
@@ -7611,7 +10026,9 @@ att.coordinated.attributes =
 att.coordinated.attribute.start =
   
   ## désigne l'élément qui, dans la transcription du texte, contient au moins le début de la section de texte représentée dans la zone ou surface.
-  attribute start { xsd:anyURI }?
+  attribute start {
+    xsd:anyURI { pattern = "\S+" }
+  }?
 att.coordinated.attribute.ulx =
   
   ## donne la valeur x de l'abscisse du coin supérieur gauche d'un rectangle.
@@ -7667,7 +10084,29 @@ facsimile =
   
   ## contient une représentation d'une source écrite quelconque sous la forme d'un ensemble d'images plutôt que sous la forme d'un texte transcrit ou encodé. [11.1. Digital Facsimiles]
   element facsimile {
-    (front?, (model.graphicLike | surface | surfaceGrp)+, back?),
+    (front?, (model.graphicLike | surface | surfaceGrp)+, back?)
+    >> sch:pattern [
+         id =
+           "test21-facsimile-no_facsimile_text_nodes-constraint-rule-106"
+         "\x{a}" ~
+         "            "
+         sch:rule [
+           context = "tei:facsimile//tei:line | tei:facsimile//tei:zone"
+           "\x{a}" ~
+           "               "
+           sch:report [
+             test = "child::text()[ normalize-space(.) ne '']"
+             "\x{a}" ~
+             "          A facsimile element represents a text with images, thus\x{a}" ~
+             "          transcribed text should not be present within it.\x{a}" ~
+             "        "
+           ]
+           "\x{a}" ~
+           "            "
+         ]
+         "\x{a}" ~
+         "         "
+       ],
     att.global.attributes,
     att.declaring.attributes,
     empty
@@ -7704,7 +10143,7 @@ surface =
   }
 surfaceGrp =
   
-  ## defines any kind of useful grouping of written surfaces, for example the recto and verso of a single leaf, which the encoder wishes to treat as a single unit. [11.1. Digital Facsimiles]
+  ## (surface group) defines any kind of useful grouping of written surfaces, for example the recto and verso of a single leaf, which the encoder wishes to treat as a single unit. [11.1. Digital Facsimiles]
   element surfaceGrp {
     (model.global | surface | surfaceGrp)+,
     att.global.attributes,
@@ -7757,7 +10196,7 @@ path =
   element path {
     empty
     >> sch:pattern [
-         id = "test21-path-pathmustnotbeclosed-constraint-rule-15"
+         id = "test21-path-pathmustnotbeclosed-constraint-rule-107"
          "\x{a}" ~
          "            "
          sch:rule [
@@ -7802,7 +10241,7 @@ path =
            "\x{a}" ~
            "               "
            sch:report [
-             test = "$firstX eq $lastX  and  $firstY eq $lastY"
+             test = "$firstX eq $lastX and $firstY eq $lastY"
              "The first and\x{a}" ~
              "          last elements of this path are the same. To specify a closed polygon, use\x{a}" ~
              "          the zone element rather than the path element. "
@@ -7850,7 +10289,7 @@ addSpan =
     empty
     >> sch:pattern [
          id =
-           "test21-addSpan-addSpan-requires-spanTo-constraint-assert-22"
+           "test21-addSpan-addSpan-requires-spanTo-constraint-rule-108"
          "\x{a}" ~
          "            "
          sch:rule [
@@ -7871,7 +10310,7 @@ addSpan =
        ]
     >> sch:pattern [
          id =
-           "test21-addSpan-addSpan-requires-spanTo-fr-constraint-assert-23"
+           "test21-addSpan-addSpan-requires-spanTo-fr-constraint-rule-109"
          "\x{a}" ~
          "            "
          sch:rule [
@@ -7895,10 +10334,12 @@ addSpan =
     att.dimensions.attributes,
     
     ## indique la fin d'un passage introduit par l'élément portant cet attribut.
-    attribute spanTo { xsd:anyURI }
+    attribute spanTo {
+      xsd:anyURI { pattern = "\S+" }
+    }
     >> sch:pattern [
          id =
-           "test21-addSpan-spanTo-spanTo-points-to-following-constraint-rule-16"
+           "test21-addSpan-spanTo-spanTo-points-to-following-constraint-rule-110"
          "\x{a}" ~
          "            "
          sch:rule [
@@ -7941,7 +10382,7 @@ damageSpan =
     empty
     >> sch:pattern [
          id =
-           "test21-damageSpan-damageSpan-requires-spanTo-constraint-assert-25"
+           "test21-damageSpan-damageSpan-requires-spanTo-constraint-rule-111"
          "\x{a}" ~
          "            "
          sch:rule [
@@ -7962,7 +10403,7 @@ damageSpan =
        ]
     >> sch:pattern [
          id =
-           "test21-damageSpan-damageSpan-requires-spanTo-fr-constraint-assert-26"
+           "test21-damageSpan-damageSpan-requires-spanTo-fr-constraint-rule-112"
          "\x{a}" ~
          "            "
          sch:rule [
@@ -7992,7 +10433,7 @@ delSpan =
     empty
     >> sch:pattern [
          id =
-           "test21-delSpan-delSpan-requires-spanTo-constraint-assert-27"
+           "test21-delSpan-delSpan-requires-spanTo-constraint-rule-113"
          "\x{a}" ~
          "            "
          sch:rule [
@@ -8013,7 +10454,7 @@ delSpan =
        ]
     >> sch:pattern [
          id =
-           "test21-delSpan-delSpan-requires-spanTo-fr-constraint-assert-28"
+           "test21-delSpan-delSpan-requires-spanTo-fr-constraint-rule-114"
          "\x{a}" ~
          "            "
          sch:rule [
@@ -8082,7 +10523,9 @@ handShift =
     att.handFeatures.attributes,
     
     ## donne l'identifiant de la nouvelle main.
-    attribute new { xsd:anyURI }?,
+    attribute new {
+      xsd:anyURI { pattern = "\S+" }
+    }?,
     empty
   }
 am =
@@ -8135,7 +10578,9 @@ space =
     
     ## (responsable) (responsible party) indicates the individual responsible for identifying and measuring the space
     attribute resp {
-      list { xsd:anyURI+ }
+      list {
+        xsd:anyURI { pattern = "\S+" }+
+      }
     }?,
     
     ## (dimension) indique si l'espace est vertical ou horizontal.
@@ -8155,7 +10600,7 @@ subst =
   element subst {
     ((add | surplus | del | model.milestoneLike)+)
     >> sch:pattern [
-         id = "test21-subst-substContents1-constraint-assert-29"
+         id = "test21-subst-substContents1-constraint-rule-115"
          "\x{a}" ~
          "            "
          sch:rule [
@@ -8267,7 +10712,9 @@ metamark =
     
     ## identifies one or more elements to which the metamark applies.
     attribute target {
-      list { xsd:anyURI+ }
+      list {
+        xsd:anyURI { pattern = "\S+" }+
+      }
     }?,
     empty
   }
@@ -8295,7 +10742,9 @@ redo =
     
     ## points to one or more elements representing the interventions which are being reasserted.
     attribute target {
-      list { xsd:anyURI+ }
+      list {
+        xsd:anyURI { pattern = "\S+" }+
+      }
     }?,
     empty
   }
@@ -8322,7 +10771,9 @@ undo =
     
     ## points to one or more elements representing the interventions which are to be reverted or undone.
     attribute target {
-      list { xsd:anyURI+ }
+      list {
+        xsd:anyURI { pattern = "\S+" }+
+      }
     }?,
     empty
   }
@@ -8342,6 +10793,18 @@ TEI =
     >> sch:ns [
          prefix = "rng"
          uri = "http://relaxng.org/ns/structure/1.0"
+       ]
+    >> sch:ns [
+         prefix = "rna"
+         uri = "http://relaxng.org/ns/compatibility/annotations/1.0"
+       ]
+    >> sch:ns [
+         prefix = "sch"
+         uri = "http://purl.oclc.org/dsdl/schematron"
+       ]
+    >> sch:ns [
+         prefix = "sch1x"
+         uri = "http://www.ascc.net/xml/schematron"
        ],
     att.global.attributes,
     att.typed.attributes,
@@ -8413,12 +10876,12 @@ group =
   element div {
     ((model.divTop | model.global)*,
      ((((model.divLike | model.divGenLike), model.global*)+
-       | (((model.common), model.global*)+,
+       | ((model.common, model.global*)+,
           ((model.divLike | model.divGenLike), model.global*)*)),
       (model.divBottom, model.global*)*)?)
     >> sch:pattern [
          id =
-           "test21-div-abstractModel-structure-div-in-l-or-lg-constraint-report-24"
+           "test21-div-abstractModel-structure-div-in-l-or-lg-constraint-rule-116"
          "\x{a}" ~
          "            "
          sch:rule [
@@ -8429,8 +10892,8 @@ group =
              test =
                "(ancestor::tei:l or ancestor::tei:lg) and not(ancestor::tei:floatingText)"
              "\x{a}" ~
-             "        Abstract model violation: Lines may not contain higher-level structural elements such as div, unless div is a descendant of floatingText.\x{a}" ~
-             "      "
+             "          Abstract model violation: Lines may not contain higher-level structural elements such as div, unless div is a descendant of floatingText.\x{a}" ~
+             "        "
            ]
            "\x{a}" ~
            "            "
@@ -8440,7 +10903,7 @@ group =
        ]
     >> sch:pattern [
          id =
-           "test21-div-abstractModel-structure-div-in-ab-or-p-constraint-report-25"
+           "test21-div-abstractModel-structure-div-in-ab-or-p-constraint-rule-117"
          "\x{a}" ~
          "            "
          sch:rule [
@@ -8451,8 +10914,8 @@ group =
              test =
                "(ancestor::tei:p or ancestor::tei:ab) and not(ancestor::tei:floatingText)"
              "\x{a}" ~
-             "        Abstract model violation: p and ab may not contain higher-level structural elements such as div, unless div is a descendant of floatingText.\x{a}" ~
-             "      "
+             "          Abstract model violation: p and ab may not contain higher-level structural elements such as div, unless div is a descendant of floatingText.\x{a}" ~
+             "        "
            ]
            "\x{a}" ~
            "            "
@@ -8476,7 +10939,7 @@ div1 =
   element div1 {
     ((model.divTop | model.global)*,
      ((((model.div2Like | model.divGenLike), model.global*)+
-       | (((model.common), model.global*)+,
+       | ((model.common, model.global*)+,
           ((model.div2Like | model.divGenLike), model.global*)*)),
       (model.divBottom, model.global*)*)?),
     att.global.attributes,
@@ -8491,7 +10954,7 @@ div2 =
   element div2 {
     ((model.divTop | model.global)*,
      ((((model.div3Like | model.divGenLike), model.global*)+
-       | (((model.common), model.global*)+,
+       | ((model.common, model.global*)+,
           ((model.div3Like | model.divGenLike), model.global*)*)),
       (model.divBottom, model.global*)*)?),
     att.global.attributes,
@@ -8506,7 +10969,7 @@ div3 =
   element div3 {
     ((model.divTop | model.global)*,
      ((((model.div4Like | model.divGenLike), model.global*)+
-       | (((model.common), model.global*)+,
+       | ((model.common, model.global*)+,
           ((model.div4Like | model.divGenLike), model.global*)*)),
       (model.divBottom, model.global*)*)?),
     att.global.attributes,
@@ -8517,11 +10980,11 @@ div3 =
   }
 div4 =
   
-  ## ( division du texte de niveau 4) contient une subdivision de quatrième niveau dans le texte préliminaire, dans le corps d’un texte ou dans le texte postliminaire. [4.1.2. Numbered Divisions]
+  ## (division du texte de niveau 4) contient une subdivision de quatrième niveau dans le texte préliminaire, dans le corps d’un texte ou dans le texte postliminaire. [4.1.2. Numbered Divisions]
   element div4 {
     ((model.divTop | model.global)*,
      ((((model.div5Like | model.divGenLike), model.global*)+
-       | (((model.common), model.global*)+,
+       | ((model.common, model.global*)+,
           ((model.div5Like | model.divGenLike), model.global*)*)),
       (model.divBottom, model.global*)*)?),
     att.global.attributes,
@@ -8532,11 +10995,11 @@ div4 =
   }
 div5 =
   
-  ## ( division du texte de niveau 5) contient une subdivision de cinquième niveau dans le texte préliminaire, dans le corps d’un texte ou dans le texte postliminaire. [4.1.2. Numbered Divisions]
+  ## (division du texte de niveau 5) contient une subdivision de cinquième niveau dans le texte préliminaire, dans le corps d’un texte ou dans le texte postliminaire. [4.1.2. Numbered Divisions]
   element div5 {
     ((model.divTop | model.global)*,
      ((((model.div6Like | model.divGenLike), model.global*)+
-       | (((model.common), model.global*)+,
+       | ((model.common, model.global*)+,
           ((model.div6Like | model.divGenLike), model.global*)*)),
       (model.divBottom, model.global*)*)?),
     att.global.attributes,
@@ -8547,11 +11010,11 @@ div5 =
   }
 div6 =
   
-  ## ( division du texte de niveau 6) contient une subdivision de sixième niveau dans le texte préliminaire, dans le corps d’un texte ou dans le texte postliminaire. [4.1.2. Numbered Divisions]
+  ## (division du texte de niveau 6) contient une subdivision de sixième niveau dans le texte préliminaire, dans le corps d’un texte ou dans le texte postliminaire. [4.1.2. Numbered Divisions]
   element div6 {
     ((model.divTop | model.global)*,
      ((((model.div7Like | model.divGenLike), model.global*)+
-       | (((model.common), model.global*)+,
+       | ((model.common, model.global*)+,
           ((model.div7Like | model.divGenLike), model.global*)*)),
       (model.divBottom, model.global*)*)?),
     att.global.attributes,
@@ -8565,7 +11028,7 @@ div7 =
   ## ( division du texte de niveau 7) contient la plus petite subdivision possible dans le texte préliminaire, dans le corps d’un texte ou dans le texte postliminaire, plus grande néanmoins qu’un paragraphe. [4.1.2. Numbered Divisions]
   element div7 {
     ((model.divTop | model.global)*,
-     (((model.common), model.global*)+,
+     ((model.common, model.global*)+,
       (model.divBottom, model.global*)*)?),
     att.global.attributes,
     att.divLike.attributes,
@@ -8783,18 +11246,8 @@ docDate =
   element docDate {
     macro.phraseSeq,
     att.global.attributes,
-    
-    ## (when) donne la date dans une forme standard, c'est-à-dire. YYYY-MM-DD.
-    attribute when {
-      xsd:date
-      | xsd:gYear
-      | xsd:gMonth
-      | xsd:gDay
-      | xsd:gYearMonth
-      | xsd:gMonthDay
-      | xsd:time
-      | xsd:dateTime
-    }?,
+    att.datable.attributes,
+    att.calendarSystem.attributes,
     empty
   }
 front =

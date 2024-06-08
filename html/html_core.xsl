@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet                 xmlns:m="http://www.w3.org/1998/Math/MathML"
-                                xmlns="http://www.w3.org/1999/xhtml"
-                                xmlns:a="http://relaxng.org/ns/compatibility/annotations/1.0"
-                                xmlns:fo="http://www.w3.org/1999/XSL/Format"
-                                xmlns:xs="http://www.w3.org/2001/XMLSchema"
-                                xmlns:html="http://www.w3.org/1999/xhtml"
-                                xmlns:fn="http://www.w3.org/2005/xpath-functions"
-                                xmlns:rng="http://relaxng.org/ns/structure/1.0"
-                                xmlns:tei="http://www.tei-c.org/ns/1.0"
-                                xmlns:teix="http://www.tei-c.org/ns/Examples"
-                                xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                                xmlns:teidocx="http://www.tei-c.org/ns/teidocx/1.0"
-                                exclude-result-prefixes="#all" version="2.0">
+				xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:a="http://relaxng.org/ns/compatibility/annotations/1.0"
+				xmlns:fo="http://www.w3.org/1999/XSL/Format"
+				xmlns:xs="http://www.w3.org/2001/XMLSchema"
+				xmlns:html="http://www.w3.org/1999/xhtml"
+				xmlns:fn="http://www.w3.org/2005/xpath-functions"
+				xmlns:rng="http://relaxng.org/ns/structure/1.0"
+				xmlns:tei="http://www.tei-c.org/ns/1.0"
+				xmlns:teix="http://www.tei-c.org/ns/Examples"
+				xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+				xmlns:teidocx="http://www.tei-c.org/ns/teidocx/1.0"
+				exclude-result-prefixes="#all" version="3.0">
   <doc xmlns="http://www.oxygenxml.com/ns/doc/xsl" scope="stylesheet" type="stylesheet">
     <desc>
       <p> TEI stylesheet dealing with elements from the core module, making
@@ -325,20 +325,8 @@ of this software, even if advised of the possibility of such damage.
       </xsl:choose>
     </xsl:element>
   </xsl:template>
-  <doc xmlns="http://www.oxygenxml.com/ns/doc/xsl">
-    <desc>
-      <p>Process element att</p>
-      <p>
-        <p xmlns="http://www.w3.org/1999/xhtml"> special purpose </p>
-      </p>
-    </desc>
-  </doc>
-  <xsl:template match="tei:att">
-    <span>
-      <xsl:call-template name="makeRendition"/>
-      <xsl:apply-templates/>
-    </span>
-  </xsl:template>
+  
+  
   <doc xmlns="http://www.oxygenxml.com/ns/doc/xsl">
     <desc>Process gloss element</desc>
   </doc>
@@ -649,6 +637,7 @@ of this software, even if advised of the possibility of such damage.
       <xsl:when test="@type='catalogue'">
         <p>
           <dl>
+	    <xsl:apply-templates select="@xml:id"/>
             <xsl:call-template name="makeRendition">
               <xsl:with-param name="default">false</xsl:with-param>
             </xsl:call-template>
@@ -665,6 +654,7 @@ of this software, even if advised of the possibility of such damage.
         </xsl:variable>
         <p>
           <table>
+	    <xsl:apply-templates select="@xml:id"/>
             <xsl:call-template name="makeRendition">
               <xsl:with-param name="default">false</xsl:with-param>
             </xsl:call-template>
@@ -685,6 +675,7 @@ of this software, even if advised of the possibility of such damage.
       </xsl:when>
       <xsl:when test="tei:isGlossList(.)">
         <dl>
+	  <xsl:apply-templates select="@xml:id"/>
           <xsl:call-template name="makeRendition">
             <xsl:with-param name="default">false</xsl:with-param>
           </xsl:call-template>
@@ -694,6 +685,7 @@ of this software, even if advised of the possibility of such damage.
       </xsl:when>
       <xsl:when test="tei:isGlossTable(.)">
         <table>
+	  <xsl:apply-templates select="@xml:id"/>
           <xsl:call-template name="makeRendition">
             <xsl:with-param name="default">false</xsl:with-param>
           </xsl:call-template>
@@ -706,6 +698,7 @@ of this software, even if advised of the possibility of such damage.
       </xsl:when>
       <xsl:when test="@type='inline' or @type='runin'">
         <p>
+	  <xsl:apply-templates select="@xml:id"/>
           <xsl:apply-templates select="*[not(self::tei:head or self::tei:trailer)]"  mode="inline"/>
         </p>
       </xsl:when>
@@ -714,6 +707,7 @@ of this software, even if advised of the possibility of such damage.
       </xsl:when>
       <xsl:otherwise>
         <xsl:element name="{if (tei:isOrderedList(.)) then 'ol' else 'ul'}">
+	  <xsl:apply-templates select="@xml:id"/>
           <xsl:call-template name="makeRendition">
             <xsl:with-param name="default">false</xsl:with-param>
           </xsl:call-template>
@@ -1911,10 +1905,12 @@ of this software, even if advised of the possibility of such damage.
       <xsl:apply-templates/>
     </xsl:element>
   </xsl:template>
+
+
   <xsl:template name="microdata"/>
 
   <doc xmlns="http://www.oxygenxml.com/ns/doc/xsl">
-    <desc>[html] processing analytic element as needed for MLA style (from Laura Mandell> </desc>
+    <desc>[html] processing analytic element as needed for MLA style (from Laura Mandell) </desc>
   </doc>
   <xsl:template match="tei:analytic" mode="mla">
     <xsl:variable name="refIdwHash">
@@ -1971,7 +1967,7 @@ of this software, even if advised of the possibility of such damage.
   </xsl:template>
   
   <doc xmlns="http://www.oxygenxml.com/ns/doc/xsl">
-    <desc>[html] processing monogr element as needed for MLA style (from Laura Mandell> </desc>
+    <desc>[html] processing monogr element as needed for MLA style (from Laura Mandell) </desc>
   </doc>
   <xsl:template match="tei:monogr" mode="mla">
     <xsl:choose>
@@ -2051,7 +2047,7 @@ of this software, even if advised of the possibility of such damage.
   </xsl:template>
   
   <doc xmlns="http://www.oxygenxml.com/ns/doc/xsl">
-    <desc>[html] processing relatedItem element as needed for MLA style (from Laura Mandell> </desc>
+    <desc>[html] processing relatedItem element as needed for MLA style (from Laura Mandell) </desc>
   </doc>
   
   <xsl:template match="tei:relatedItem" mode="mla">
