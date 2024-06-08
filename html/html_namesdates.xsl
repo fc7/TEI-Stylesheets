@@ -75,6 +75,14 @@ of this software, even if advised of the possibility of such damage.
                   <xsl:value-of select="tei:persName/tei:surname/text()"/>
               </xsl:otherwise>
           </xsl:choose>
+          <xsl:if test="tei:persName/tei:addName">
+              <xsl:text>, </xsl:text>
+              <xsl:value-of select="tei:persName/tei:addName/text()"/>
+          </xsl:if>
+          <xsl:if test="tei:persName/tei:title">
+              <xsl:text>, </xsl:text>
+              <xsl:value-of select="tei:persName/tei:title/text()"/>
+          </xsl:if>
           <xsl:if test="tei:birth|tei:death">
               <xsl:text> (</xsl:text>
               <xsl:choose>
@@ -97,7 +105,7 @@ of this software, even if advised of the possibility of such damage.
               <xsl:value-of select="tei:occupation"/>
           </xsl:if>
           <xsl:if test="tei:note">
-              <xsl:text>, </xsl:text>
+              <xsl:text>. </xsl:text>
               <xsl:value-of select="tei:note"/>
           </xsl:if>
           <br/>
