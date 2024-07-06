@@ -603,8 +603,10 @@ div.numbering{
     width:2em;
 }
 
+/* fc7
 div.linenumber{
 }
+*/
 
 div.signed{
     text-align:left;
@@ -734,8 +736,10 @@ div.q{
     font-style:italic;
 }
 /* inline quote */
+/*
 span.q{
 }
+*/
 
 /* from drama */
 /* speeches in drama */
@@ -790,16 +794,21 @@ span.upLink{
     font-style:italic;
 }
 /* bibl */
+
+/*
 span.titlem{
-    /*font-style:italic;*/
+    font-style:italic;
 }
+*/
 span.titlej{
     font-style:italic;
 }
+/*
 span.titleu{
 }
 span.titles{
 }
+*/
 
 aside,
 span.notemargin,
@@ -873,6 +882,7 @@ div.footer{
 }
 
 div.stdfooter{
+    display: none;
     clear:both;
     border-top:solid black 1pt;
     border-bottom:solid black 1pt;
@@ -1017,8 +1027,10 @@ span.distinct{
 
 /* transcription */
 
+/*
 div.sourceDoc{
 }
+*/
 
 div.surfaceGrp{
     border-bottom-width:1pt;
@@ -1042,8 +1054,10 @@ div.zone{
     margin-bottom:0.5ex;
 }
 
+/*
 div.line{
 }
+*/
 
 div.facsimage{
     float:right;
@@ -1071,8 +1085,10 @@ div.app{
     margin-top:1pt;
     font-size:smaller;
 }
+/*
 span.lemma{
 }
+*/
 span.lemmawitness{
     font-weight:bold;
 }
@@ -1244,7 +1260,7 @@ span.nameref {
 	vertical-align:super;
 }
 
-/* FIXME This has zero effect! */
+/* fc7 FIXME This has zero effect! */
 /*name[title]:hover::after {
   content: attr(title);
   color: blue;
