@@ -33,9 +33,12 @@ theory of liability, whether in contract, strict liability, or tort
 (including negligence or otherwise) arising in any way out of the use
 of this software, even if advised of the possibility of such damage.
 
+--- With several modifications by FC7 ---
+
 */
 
 /* main layout */
+@import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap');
 @import url(odd.css);
 body.simple{
     color:#000000;
@@ -43,12 +46,26 @@ body.simple{
     margin:10pt;
 }
 
-body{
+body {
     color:#000000;
     background-color:#FFFFFF;
-    margin:10pt;
-    padding:0;
-    font-family:Verdana, Tahoma, Geneva, Arial, Helvetica, sans-serif;
+    font-family:Baskerville, "Libre Baskerville", serif;
+    font-size:16pt;
+    line-height:1.35;
+    max-width:1111px;
+    min-width:81%;
+    padding:0.1px 12% 9% 12%;
+    width:81%;
+    box-sizing:border-box;
+    height:100%;
+    z-index:0;
+}
+
+/* FC: this is necessary because table does not properly inherit from body */
+table {
+    font-size:16pt;
+    line-height:1.35;
+    margin-left:20pt;
 }
 
 body.pagetable{
@@ -177,27 +194,27 @@ div.stdheader{
 }
 h1{
     font-weight:bold;
-    font-size:1.8em;
+    font-size:1.3em;
     margin-bottom:0.8em;
 }
 
 h2{
-    font-size:1.3em;
+    font-size:1.2em;
     margin-bottom:0.7em;
     font-weight:bold;
 }
 
 h3{
-    font-size:1.2em;
+    font-size:1.1em;
     font-weight:bold;
     margin-bottom:0.5em;
     font-style:italic;
 }
 
 h1.maintitle{
-    margin-left:100px;
-    font-family:Arial, Helvetica, sans-serif;
-    font-weight:bold;
+    margin-left:0px;
+    font-family:Avenir Next, sans-serif;
+    /*font-weight:bold;*/
     bottom:5px;
 }
 
@@ -449,7 +466,7 @@ a.toclist:link
 }
 
 /* notes */
-div.noteHeading{
+/*div.noteHeading{
     margin-top:9pt;
     border:0;
     border-top:1pt;
@@ -484,7 +501,7 @@ span.note:after{
 
 span.note{
     font-size:smaller;
-}
+}*/
 /* address */
 span.address {
     display: block;
@@ -586,8 +603,10 @@ div.numbering{
     width:2em;
 }
 
+/* fc7
 div.linenumber{
 }
+*/
 
 div.signed{
     text-align:left;
@@ -717,8 +736,10 @@ div.q{
     font-style:italic;
 }
 /* inline quote */
+/*
 span.q{
 }
+*/
 
 /* from drama */
 /* speeches in drama */
@@ -773,16 +794,21 @@ span.upLink{
     font-style:italic;
 }
 /* bibl */
+
+/* fc7
 span.titlem{
     font-style:italic;
 }
+*/
 span.titlej{
     font-style:italic;
 }
+/* fc7
 span.titleu{
 }
 span.titles{
 }
+*/
 
 aside,
 span.notemargin,
@@ -856,6 +882,7 @@ div.footer{
 }
 
 div.stdfooter{
+    display:none;
     clear:both;
     border-top:solid black 1pt;
     border-bottom:solid black 1pt;
@@ -976,7 +1003,7 @@ span.distinct{
 
 /* generic rendition */
 .plain{
-    text-decoration:none;
+    display:none;
 }
 
 .small{
@@ -1000,8 +1027,10 @@ span.distinct{
 
 /* transcription */
 
+/* fc7
 div.sourceDoc{
 }
+*/
 
 div.surfaceGrp{
     border-bottom-width:1pt;
@@ -1025,8 +1054,10 @@ div.zone{
     margin-bottom:0.5ex;
 }
 
+/* fc7
 div.line{
 }
+*/
 
 div.facsimage{
     float:right;
@@ -1054,8 +1085,10 @@ div.app{
     margin-top:1pt;
     font-size:smaller;
 }
+/* fc7
 span.lemma{
 }
+*/
 span.lemmawitness{
     font-weight:bold;
 }
@@ -1092,3 +1125,161 @@ table.border{
 .orange{
     color:orange;
 }
+
+/* ADDITIONS by FC7 (based on PAL project) */
+/*a {
+  border-bottom:2px solid #98d8ff;
+}*/
+a.notelink {
+    background-color: #d0d0d0;
+}
+
+a:focus, a:hover {
+  border-bottom:2px solid #104080;
+}
+a:active {
+  border-bottom:2px dotted #00a000;
+}
+a.app {
+  border:none;
+  /*box-shadow:0 0 2px 0 #a0b0e0;*/
+  padding:0.05em 0.1em 0 0.06em;
+}
+a.app:focus,
+a.app:hover,
+span.note:hover a.note {
+  background-color:#fbfb95;
+}
+
+/* CSS baseline 2023!
+ * https://developer.mozilla.org/en-US/docs/Web/CSS/:has
+ * https://stackoverflow.com/questions/4502633/how-to-affect-other-elements-when-one-element-is-hovered
+ * https://stackoverflow.com/questions/1817792/is-there-a-previous-sibling-selector
+ */
+span.txtlemma:has(+ span.app:hover) {
+    background-color:#bdfcba;
+}
+
+a.app::before,
+span.appnote::before {
+  color:#000000;
+  content:attr(data-sign);
+  line-height:0;
+  top:2px;
+  vertical-align:super;
+}
+span.appnote::before {
+    padding-right:10px;
+}
+a.app::before {
+  /*content:attr(aria-label);*/
+  content:"*";
+  font-size:0.8em;
+}
+box- {
+  position:absolute;
+  text-align:center;
+  width:5em;
+}
+span.appnote {
+  background-color:#ffffff;
+  border-radius:1px;
+  /*box-shadow:0 0 2px 0 #a0b0e0;*/
+  float:right;
+  display:none; /* todo: toggle globally */
+  font-size:0.85rem;
+  margin-right:-53%;
+  text-align:start;
+  padding:3px 5px 4px 5px;
+  width:51%;
+    z-index:0;
+}
+span.appnote:target {
+  z-index:2;
+}
+span.appnote .embed_left {
+  display:inline-block;
+  float:none;
+}
+span.app {
+  font-weight:normal;
+  margin:0 3px 0 3px;
+}
+span.app:hover > a.app,
+span.app:hover > span.appnote {
+  box-shadow:0 0 3px 2px #66afff;
+  display:unset;
+  z-index:2;
+}
+input[type=checkbox].inlinenote ~ span.noteBody {
+    display:none;
+}
+input[type=checkbox]:checked ~ span.noteBody {
+    display:block;
+    font-size:smaller;
+    box-shadow:0 0 3px 2px #66afff;
+}
+span.noteBody {
+    text-indent: 1em;
+}
+input[type=checkbox].inlinenote {
+    display:none;
+}
+span.pagesep > a {
+    color:blue;
+}
+span.pagesepmargin {
+  border-radius:1px;
+  float:left;
+  display:none;
+  font-size:smaller;
+  margin-left:-53%;
+  text-align:end;
+  padding:3px 5px 4px 5px;
+  width:51%;
+}
+span.pagesepmargin:target {
+    z-index:1;
+}
+span.pagesep:hover + span.pagesepmargin {
+    display:unset;
+}
+
+span.note:hover > span.textlemma {
+    background-color: yellow;
+}
+/* do not display the note symbol inside notes */
+.applemma > label {
+    display:none;
+}
+
+/* display the id of each witness before each item */
+.teidiv0 > ul > li::before {
+    content: "[" attr(id) "] ";
+    color: blue;
+}
+
+ul > li::marker {
+    content: "⁃  "; /*‣  */
+}
+
+span.appomission {
+    font-style:italic;
+}
+
+.name {
+  border-bottom: 1px dotted blue;
+}
+span.nameref {
+  font-size:0.5em;
+  vertical-align:super;
+}
+
+/* fc7 FIXME This has zero effect! */
+/*name[title]:hover::after {
+  content: attr(title);
+  color: blue;
+  position: absolute;
+  top: -100%;
+  left: 0;
+}*/
